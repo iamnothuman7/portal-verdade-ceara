@@ -30,6 +30,11 @@ class AgencyTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Acesso restrito")
 
+    def test_health_checks_database(self):
+        response = self.client.get(reverse("health"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok", "database": "ok"})
+
     def test_management_dashboard_requires_login(self):
         response = self.client.get(reverse("agency:dashboard"))
         self.assertRedirects(response, f"{reverse('login')}?next={reverse('agency:dashboard')}")
