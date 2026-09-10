@@ -2,12 +2,12 @@
 {% block title %}{{ client.trade_name }}{% endblock %}{% block section_name %}Cliente{% endblock %}
 {% block content %}
 <div class="back-link"><a href="{% url 'agency:client_list' %}">← Voltar para clientes</a></div>
-<div class="page-heading compact"><div><span class="eyebrow">{{ client.get_kind_display }}</span><h1>{{ client.trade_name }}</h1><p>{{ client.contact_name|default:"Contato não informado" }}{% if client.phone %} • {{ client.phone }}{% endif %}</p></div><a class="button" href="{% url 'admin:agency_client_change' client.pk %}">Editar cliente</a></div>
+<div class="page-heading compact"><div><span class="eyebrow">{{ client.get_kind_display }}</span><h1>{{ client.trade_name }}</h1><p>{{ client.contact_name|default:"Contato não informado" }}{% if client.phone %} • {{ client.phone }}{% endif %}</p></div><a class="button" href="{% url 'agency:client_edit' client.pk %}">Editar cliente</a></div>
 <section class="dashboard-grid">
-  <article class="panel"><div class="panel-head"><div><span class="eyebrow">Pacotes</span><h2>Contratos</h2></div><a href="{% url 'admin:agency_contract_add' %}">Novo contrato</a></div>
-    {% for contract in contracts %}<div class="contract-block"><div><span class="badge">{{ contract.get_status_display }}</span><h3>{{ contract.title }}</h3><p>{{ contract.start_date|date:"d/m/Y" }} a {{ contract.end_date|date:"d/m/Y" }} • R$ {{ contract.monthly_value|floatformat:2 }}/mês</p></div><div class="quota-list">{% for quota in contract.quotas.all %}<span>{{ quota.get_kind_display }} <b>{{ quota.quantity }}</b></span>{% empty %}<small>Sem itens definidos</small>{% endfor %}</div></div>{% empty %}<div class="empty">Nenhum contrato cadastrado.</div>{% endfor %}
+  <article class="panel"><div class="panel-head"><div><span class="eyebrow">Pacotes</span><h2>Contratos</h2></div><a href="{% url 'agency:contract_builder' %}">Novo contrato</a></div>
+    {% for contract in contracts %}<div class="contract-block"><div><span class="badge">{{ contract.get_status_display }}</span><h3>{{ contract.title }}</h3><p>{{ contract.start_date|date:"d/m/Y" }} a {{ contract.end_date|date:"d/m/Y" }} • R$ {{ contract.monthly_value|floatformat:"2g" }}/mês</p></div><div class="quota-list">{% for quota in contract.quotas.all %}<span>{{ quota.get_kind_display }} <b>{{ quota.quantity }}</b></span>{% empty %}<small>Sem itens definidos</small>{% endfor %}</div></div>{% empty %}<div class="empty">Nenhum contrato cadastrado.</div>{% endfor %}
   </article>
-  <aside class="panel"><div class="panel-head"><div><span class="eyebrow">Mês atual</span><h2>Materiais</h2></div><a href="{% url 'admin:agency_contentdelivery_add' %}">Adicionar</a></div>
+  <aside class="panel"><div class="panel-head"><div><span class="eyebrow">Mês atual</span><h2>Materiais</h2></div><a href="{% url 'agency:delivery_create' %}">Adicionar</a></div>
     <div class="list-stack">{% for item in deliveries %}<div class="list-row simple"><div><strong>{{ item.title }}</strong><small>{{ item.get_kind_display }} • {{ item.scheduled_for|date:"d/m" }}</small></div><span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span></div>{% empty %}<div class="empty">Nenhum material neste mês.</div>{% endfor %}</div>
   </aside>
 </section>

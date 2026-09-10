@@ -1,5 +1,7 @@
 {% extends "admin/base.html" %}
 {% load static %}
 {% block title %}{{ title }} | Portal Verdade Ceará{% endblock %}
-{% block branding %}<div style="display:flex;align-items:center;gap:14px"><img src="{% static 'images/logo-portal-verdade-ceara.png' %}" alt="Portal Verdade Ceará" style="width:170px;height:48px;object-fit:contain"><h1 id="site-name"><a href="{% url 'admin:index' %}">Gestão editorial e administrativa</a></h1></div>{% endblock %}
-{% block extrastyle %}{{ block.super }}<style>:root{--primary:#b60000;--secondary:#700000;--accent:#fff;--header-bg:#080808;--header-color:#fff;--breadcrumbs-bg:#b60000;--link-fg:#b60000;--link-hover-color:#e00000;--button-bg:#b60000;--button-hover-bg:#870000}body{background:#f3f3f4}#header{padding:12px 28px}</style>{% endblock %}
+{% block extrahead %}{{ block.super }}<link rel="icon" type="image/png" href="{% static 'images/favicon-portal.png' %}"><link rel="apple-touch-icon" href="{% static 'images/favicon-portal.png' %}">{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/admin_portal.css' %}?v=1">{% endblock %}
+{% block branding %}<a class="portal-admin-brand" href="{% url 'agency:dashboard' %}"><img src="{% static 'images/favicon-portal.png' %}" alt=""><span><b>Portal Verdade Ceará</b><small>Configurações avançadas</small></span></a>{% endblock %}
+{% block nav-global %}<a class="portal-admin-return" href="{% url 'agency:dashboard' %}">← Voltar ao sistema</a>{% endblock %}

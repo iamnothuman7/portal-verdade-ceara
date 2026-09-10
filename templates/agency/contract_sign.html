@@ -3,7 +3,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-  <title>Contrato | {{ contract.client.trade_name }}</title><link rel="stylesheet" href="{% static 'css/system.css' %}?v=2">
+  <title>Contrato | {{ contract.client.trade_name }}</title><link rel="icon" type="image/png" href="{% static 'images/favicon-portal.png' %}"><link rel="apple-touch-icon" href="{% static 'images/favicon-portal.png' %}"><link rel="stylesheet" href="{% static 'css/system.css' %}?v=3">
 </head>
 <body class="contract-page">
 <main class="contract-shell">
@@ -11,12 +11,13 @@
   {% if unavailable %}<section class="contract-paper empty"><h1>Contrato indisponível</h1><p>Este link não está mais disponível para assinatura.</p></section>
   {% else %}
   <article class="contract-paper">
+    <div class="contract-public-actions"><a class="button" target="_blank" href="{% url 'agency_signing:pdf' contract.signature_token %}">Baixar PDF</a></div>
     {% if signed %}<div class="signature-success"><span>✓</span><div><strong>Contrato assinado</strong><p>A assinatura foi registrada em {{ contract.signed_at|date:"d/m/Y \à\s H:i" }}.</p></div></div>{% endif %}
     <span class="eyebrow">Contrato de prestação de serviços</span><h1>{{ contract.title }}</h1>
-    <div class="contract-meta"><div><span>Contratante</span><strong>{{ contract.client.legal_name|default:contract.client.trade_name }}</strong></div><div><span>Vigência</span><strong>{{ contract.start_date|date:"d/m/Y" }} a {{ contract.end_date|date:"d/m/Y" }}</strong></div><div><span>Valor mensal</span><strong>R$ {{ contract.monthly_value|floatformat:2 }}</strong></div></div>
+    <div class="contract-meta"><div><span>Contratante</span><strong>{{ contract.client.legal_name|default:contract.client.trade_name }}</strong></div><div><span>Vigência</span><strong>{{ contract.start_date|date:"d/m/Y" }} a {{ contract.end_date|date:"d/m/Y" }}</strong></div><div><span>Valor mensal</span><strong>R$ {{ contract.monthly_value|floatformat:"2g" }}</strong></div></div>
     <section class="contract-section"><h2>Pacote mensal contratado</h2><div class="quota-list large">{% for quota in contract.quotas.all %}<span>{{ quota.get_kind_display }} <b>{{ quota.quantity }}</b><small>por mês</small></span>{% empty %}<p>Os materiais estão descritos nos termos abaixo.</p>{% endfor %}</div></section>
     <section class="contract-section"><h2>Termos e condições</h2><div class="contract-terms">{{ contract.terms|linebreaks }}</div></section>
-    {% if signed %}<section class="signed-proof"><h2>Comprovante da assinatura</h2><dl><div><dt>Signatário</dt><dd>{{ contract.signer_name }}</dd></div><div><dt>CPF</dt><dd>{{ contract.signer_tax_id }}</dd></div><div><dt>E-mail</dt><dd>{{ contract.signer_email }}</dd></div><div><dt>Registro</dt><dd>{{ contract.signature_hash }}</dd></div></dl><button class="button" type="button" onclick="window.print()">Imprimir contrato</button></section>
+    {% if signed %}<section class="signed-proof"><h2>Comprovante da assinatura</h2><dl><div><dt>Signatário</dt><dd>{{ contract.signer_name }}</dd></div><div><dt>CPF</dt><dd>{{ contract.signer_tax_id }}</dd></div><div><dt>E-mail</dt><dd>{{ contract.signer_email }}</dd></div><div><dt>Registro</dt><dd>{{ contract.signature_hash }}</dd></div></dl><div class="heading-actions"><a class="button" target="_blank" href="{% url 'agency_signing:pdf' contract.signature_token %}">PDF assinado</a><button class="button" type="button" onclick="window.print()">Imprimir contrato</button></div></section>
     {% else %}<section class="signature-box"><span class="eyebrow">Assinatura eletrônica</span><h2>Confirme seus dados para assinar</h2><form method="post" class="form-grid">{% csrf_token %}{% for field in form %}<div class="field {% if field.name == 'consent' %}field-consent{% endif %}">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>{% endfor %}<button class="button button-primary" type="submit">Assinar contrato</button></form><p class="legal-note">O sistema registra data, hora, endereço IP e um comprovante criptográfico do documento aceito.</p></section>{% endif %}
   </article>{% endif %}
 </main>

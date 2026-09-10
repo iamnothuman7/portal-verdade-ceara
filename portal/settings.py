@@ -83,6 +83,7 @@ LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Fortaleza"
 USE_I18N = True
 USE_TZ = True
+USE_THOUSAND_SEPARATOR = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", BASE_DIR / "staticfiles"))

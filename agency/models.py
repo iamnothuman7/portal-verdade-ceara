@@ -45,6 +45,36 @@ class Client(models.Model):
         return reverse("agency:client_detail", kwargs={"pk": self.pk})
 
 
+class ContractTemplate(models.Model):
+    name = models.CharField("nome do modelo", max_length=160)
+    content = models.TextField(
+        "conteúdo",
+        help_text=(
+            "Variáveis disponíveis: [[cliente_nome]], [[cliente_razao_social]], "
+            "[[cliente_documento]], [[cliente_endereco]], [[contrato_nome]], "
+            "[[data_inicio]], [[data_fim]], [[valor_mensal]], [[dia_vencimento]] "
+            "e [[pacote_mensal]]."
+        ),
+    )
+    is_active = models.BooleanField("ativo", default=True)
+    created_at = models.DateTimeField("criado em", auto_now_add=True)
+    updated_at = models.DateTimeField("atualizado em", auto_now=True)
+
+    class Meta:
+        ordering = ("name",)
+        verbose_name = "modelo de contrato"
+        verbose_name_plural = "modelos de contrato"
+
+    def __str__(self):
+        return self.name
+
+    def render(self, context):
+        rendered = self.content
+        for key, value in context.items():
+            rendered = rendered.replace(f"[[{key}]]", str(value or "—"))
+        return rendered
+
+
 class Contract(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Rascunho"
@@ -53,6 +83,14 @@ class Contract(models.Model):
         CANCELLED = "cancelled", "Cancelado"
 
     client = models.ForeignKey(Client, verbose_name="cliente", on_delete=models.PROTECT, related_name="contracts")
+    template = models.ForeignKey(
+        ContractTemplate,
+        verbose_name="modelo utilizado",
+        on_delete=models.SET_NULL,
+        related_name="contracts",
+        null=True,
+        blank=True,
+    )
     title = models.CharField("nome do contrato / pacote", max_length=160)
     start_date = models.DateField("início")
     end_date = models.DateField("término")

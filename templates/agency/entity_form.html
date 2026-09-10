@@ -1,0 +1,20 @@
+{% extends 'agency/base.html' %}
+{% block title %}{{ title }}{% endblock %}{% block section_name %}{{ title }}{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ back_url }}">← Voltar</a>
+<div class="page-heading compact"><div><span class="eyebrow">{{ eyebrow }}</span><h1>{{ title }}</h1><p>{{ description }}</p></div></div>
+<form method="post" class="entity-form">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert form-alert">{{ form.non_field_errors }}</div>{% endif %}
+  <section class="studio-panel">
+    <div class="studio-panel-head"><span>✦</span><div><h2>Informações</h2><p>Os campos obrigatórios estão identificados no formulário.</p></div></div>
+    <div class="entity-form-grid">
+      {% for field in form %}<div class="studio-field {% if field.name == 'address' or field.name == 'notes' %}wide{% endif %} {% if field.field.widget.input_type == 'checkbox' %}checkbox-field{% endif %}">
+        {% if field.field.widget.input_type == 'checkbox' %}{{ field }}{{ field.label_tag }}{% else %}{{ field.label_tag }}{{ field }}{% endif %}
+        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>{% endfor %}
+    </div>
+  </section>
+  <div class="studio-submit"><a class="button" href="{{ back_url }}">Cancelar</a><button class="button button-primary" type="submit">{{ submit_label }}</button></div>
+</form>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Client, ContentDelivery, Contract, DeliverableQuota, FinancialEntry
+from .models import Client, ContentDelivery, Contract, ContractTemplate, DeliverableQuota, FinancialEntry
 
 
 class DeliverableQuotaInline(admin.TabularInline):
@@ -17,11 +17,18 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
-    list_display = ("title", "client", "start_date", "end_date", "monthly_value", "status", "signed_at")
-    list_filter = ("status", "start_date", "end_date")
+    list_display = ("title", "client", "template", "start_date", "end_date", "monthly_value", "status", "signed_at")
+    list_filter = ("status", "template", "start_date", "end_date")
     search_fields = ("title", "client__trade_name", "client__legal_name")
     readonly_fields = ("signature_token", "signed_at", "signature_ip", "signature_user_agent", "signature_hash")
     inlines = (DeliverableQuotaInline,)
+
+
+@admin.register(ContractTemplate)
+class ContractTemplateAdmin(admin.ModelAdmin):
+    list_display = ("name", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "content")
 
 
 @admin.register(ContentDelivery)

@@ -1,9 +1,14 @@
 {% extends 'agency/base.html' %}
 {% block title %}Contratos{% endblock %}{% block section_name %}Contratos{% endblock %}
 {% block content %}
-<div class="page-heading compact"><div><span class="eyebrow">Comercial</span><h1>Contratos</h1><p>Vigências, pacotes mensais e assinaturas dos clientes.</p></div><a class="button button-primary" href="{% url 'admin:agency_contract_add' %}">+ Novo contrato</a></div>
+<div class="page-heading compact"><div><span class="eyebrow">Estúdio de documentos</span><h1>Contratos</h1><p>Gere documentos, organize os pacotes e acompanhe as assinaturas.</p></div><div class="heading-actions">{% if request.user.is_staff %}<a class="button" href="{% url 'agency:template_library' %}">Modelos</a>{% endif %}<a class="button button-primary" href="{% url 'agency:contract_builder' %}">+ Gerar contrato</a></div></div>
+<section class="studio-summary">
+  <div><span>Modelos reutilizáveis</span><strong>Campos automáticos</strong><small>Cliente, vigência, valor e pacote</small></div>
+  <div><span>Documento profissional</span><strong>PDF em A4</strong><small>Marca, paginação e comprovante</small></div>
+  <div><span>Assinatura eletrônica</span><strong>Link seguro</strong><small>Data, IP e hash de integridade</small></div>
+</section>
 <div class="table-panel"><table><thead><tr><th>Cliente / contrato</th><th>Vigência</th><th>Pacote mensal</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>
-{% for contract in contracts %}<tr><td><strong>{{ contract.client.trade_name }}</strong><small>{{ contract.title }}</small></td><td>{{ contract.start_date|date:"d/m/Y" }}<small>até {{ contract.end_date|date:"d/m/Y" }}</small></td><td><div class="quota-inline">{% for quota in contract.quotas.all %}<span>{{ quota.quantity }} {{ quota.get_kind_display }}</span>{% empty %}—{% endfor %}</div></td><td>R$ {{ contract.monthly_value|floatformat:2 }}</td><td><span class="badge">{{ contract.get_status_display }}</span></td><td><a href="{% url 'admin:agency_contract_change' contract.pk %}">Editar</a>{% if not contract.signed_at %}<a href="{{ contract.get_signing_url }}" target="_blank">Assinatura</a>{% endif %}</td></tr>
+{% for contract in contracts %}<tr><td><strong>{{ contract.client.trade_name }}</strong><small>{{ contract.title }}</small></td><td>{{ contract.start_date|date:"d/m/Y" }}<small>até {{ contract.end_date|date:"d/m/Y" }}</small></td><td><div class="quota-inline">{% for quota in contract.quotas.all %}<span>{{ quota.quantity }} {{ quota.get_kind_display }}</span>{% empty %}—{% endfor %}</div></td><td>R$ {{ contract.monthly_value|floatformat:"2g" }}</td><td><span class="badge badge-{{ contract.status }}">{{ contract.get_status_display }}</span></td><td><a href="{% url 'agency:contract_detail' contract.pk %}">Abrir</a><a href="{% url 'agency:contract_pdf' contract.pk %}" target="_blank">PDF</a></td></tr>
 {% empty %}<tr><td colspan="6" class="empty">Nenhum contrato cadastrado.</td></tr>{% endfor %}
 </tbody></table></div>
 {% endblock %}

@@ -4,13 +4,13 @@
 {% block content %}
 <div class="page-heading">
   <div><span class="eyebrow">Resumo operacional</span><h1>Olá, {{ request.user.get_short_name|default:request.user.username }}.</h1><p>Acompanhe o mês atual e veja o que precisa de atenção.</p></div>
-  <a class="button button-primary" href="{% url 'admin:agency_client_add' %}">+ Novo cliente</a>
+  <a class="button button-primary" href="{% url 'agency:client_create' %}">+ Novo cliente</a>
 </div>
 <section class="metric-grid">
   <article class="metric-card"><span>Clientes ativos</span><strong>{{ active_clients }}</strong><a href="{% url 'agency:client_list' %}">Ver clientes</a></article>
   <article class="metric-card"><span>Contratos vigentes</span><strong>{{ active_contracts }}</strong><small>{{ pending_signatures }} aguardando assinatura</small></article>
   <article class="metric-card"><span>Materiais do mês</span><strong>{{ month_deliveries }}</strong><small>{{ published_deliveries }} publicados</small></article>
-  <article class="metric-card accent"><span>Saldo realizado</span><strong>R$ {{ balance|floatformat:2 }}</strong><small>Entradas menos saídas pagas</small></article>
+  <article class="metric-card accent"><span>Saldo realizado</span><strong>R$ {{ balance|floatformat:"2g" }}</strong><small>Entradas menos saídas pagas</small></article>
 </section>
 <section class="dashboard-grid">
   <article class="panel">
@@ -23,11 +23,11 @@
   </article>
   <aside class="panel finance-snapshot">
     <div class="panel-head"><div><span class="eyebrow">Financeiro</span><h2>Fluxo do mês</h2></div><a href="{% url 'agency:finance' %}">Detalhes</a></div>
-    <div class="money-row income"><span>Entradas pagas</span><strong>R$ {{ income|floatformat:2 }}</strong></div>
-    <div class="money-row expense"><span>Saídas pagas</span><strong>R$ {{ expense|floatformat:2 }}</strong></div>
+    <div class="money-row income"><span>Entradas pagas</span><strong>R$ {{ income|floatformat:"2g" }}</strong></div>
+    <div class="money-row expense"><span>Saídas pagas</span><strong>R$ {{ expense|floatformat:"2g" }}</strong></div>
     <div class="divider"></div>
     <h3>Pendências vencidas</h3>
-    {% for entry in late_entries %}<div class="late-row"><div><strong>{{ entry.description }}</strong><small>{{ entry.client|default:"Sem cliente" }} • {{ entry.due_date|date:"d/m/Y" }}</small></div><b>R$ {{ entry.amount|floatformat:2 }}</b></div>{% empty %}<p class="muted">Nenhuma pendência vencida.</p>{% endfor %}
+    {% for entry in late_entries %}<div class="late-row"><div><strong>{{ entry.description }}</strong><small>{{ entry.client|default:"Sem cliente" }} • {{ entry.due_date|date:"d/m/Y" }}</small></div><b>R$ {{ entry.amount|floatformat:"2g" }}</b></div>{% empty %}<p class="muted">Nenhuma pendência vencida.</p>{% endfor %}
   </aside>
 </section>
 {% endblock %}

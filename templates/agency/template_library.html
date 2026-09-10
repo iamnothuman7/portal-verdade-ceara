@@ -1,0 +1,8 @@
+{% extends 'agency/base.html' %}
+{% block title %}Modelos de contrato{% endblock %}{% block section_name %}Modelos de contrato{% endblock %}
+{% block content %}
+<a class="back-link" href="{% url 'agency:contract_list' %}">← Voltar aos contratos</a>
+<div class="page-heading compact"><div><span class="eyebrow">Biblioteca</span><h1>Modelos de contrato</h1><p>Crie textos reutilizáveis com campos que são preenchidos automaticamente.</p></div><a class="button button-primary" href="{% url 'agency:template_create' %}">+ Novo modelo</a></div>
+<div class="legal-review-note"><strong>Antes do uso real:</strong> personalize os dados e submeta o texto à revisão de um profissional jurídico. O modelo inicial é operacional e não substitui orientação jurídica.</div>
+<div class="template-grid">{% for item in templates %}<article class="template-card"><div class="template-icon">◇</div><span class="badge {% if item.is_active %}badge-signed{% endif %}">{% if item.is_active %}Ativo{% else %}Inativo{% endif %}</span><h2>{{ item.name }}</h2><p>{{ item.content|truncatechars:180 }}</p><div><small>Atualizado em {{ item.updated_at|date:"d/m/Y H:i" }}</small><a class="button" href="{% url 'agency:template_edit' item.pk %}">Configurar</a></div></article>{% empty %}<div class="empty">Nenhum modelo cadastrado.</div>{% endfor %}</div>
+{% endblock %}

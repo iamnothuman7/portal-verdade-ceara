@@ -6,12 +6,14 @@ Sistema privado para administrar a operação comercial e financeira do Portal V
 
 - login obrigatório e painel responsivo;
 - cadastro de clientes (lojas, empresas e prestadores de serviços);
-- contratos com vigência, valor mensal e pacote de materiais;
+- estúdio de contratos com modelos reutilizáveis e campos automáticos;
+- contratos em PDF A4 com identidade visual, vigência, valor e pacote de materiais;
 - cotas mensais de stories, feed, vídeo, reels, matérias, banners e outros;
-- calendário de produção e acompanhamento de status;
+- quadro de produção por etapas e acompanhamento de status;
 - assinatura eletrônica por link individual, com data, IP e comprovante criptográfico;
-- controle de entradas, saídas, pagamentos e pendências;
-- área administrativa para todos os cadastros.
+- financeiro com previsto x realizado, filtros, contas pendentes e atrasadas;
+- relatórios financeiros e contratos em PDF A4 com papel timbrado;
+- cadastros personalizados e área administrativa avançada com a identidade do Portal.
 
 ## Desenvolvimento
 

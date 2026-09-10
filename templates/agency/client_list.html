@@ -1,7 +1,7 @@
 {% extends 'agency/base.html' %}
 {% block title %}Clientes{% endblock %}{% block section_name %}Clientes{% endblock %}
 {% block content %}
-<div class="page-heading compact"><div><span class="eyebrow">Carteira</span><h1>Clientes</h1><p>Empresas, lojas e prestadores atendidos pela agência.</p></div><a class="button button-primary" href="{% url 'admin:agency_client_add' %}">+ Cadastrar cliente</a></div>
+<div class="page-heading compact"><div><span class="eyebrow">Carteira</span><h1>Clientes</h1><p>Empresas, lojas e prestadores atendidos pelo Portal.</p></div><a class="button button-primary" href="{% url 'agency:client_create' %}">+ Cadastrar cliente</a></div>
 <form class="search-bar" method="get"><input type="search" name="q" value="{{ query }}" placeholder="Buscar por cliente ou contato"><button type="submit">Buscar</button></form>
 <div class="card-grid">
   {% for client in clients %}<a class="client-card" href="{{ client.get_absolute_url }}"><div class="client-avatar">{{ client.trade_name|slice:":2"|upper }}</div><div><span class="badge">{{ client.get_status_display }}</span><h2>{{ client.trade_name }}</h2><p>{{ client.get_kind_display }}{% if client.contact_name %} • {{ client.contact_name }}{% endif %}</p><small>{{ client.contract_count }} contrato{{ client.contract_count|pluralize }}</small></div><b>›</b></a>
