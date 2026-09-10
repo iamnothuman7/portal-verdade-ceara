@@ -1,0 +1,33 @@
+{% extends 'agency/base.html' %}
+{% block title %}Visão geral{% endblock %}
+{% block section_name %}Visão geral{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><span class="eyebrow">Resumo operacional</span><h1>Olá, {{ request.user.get_short_name|default:request.user.username }}.</h1><p>Acompanhe o mês atual e veja o que precisa de atenção.</p></div>
+  <a class="button button-primary" href="{% url 'admin:agency_client_add' %}">+ Novo cliente</a>
+</div>
+<section class="metric-grid">
+  <article class="metric-card"><span>Clientes ativos</span><strong>{{ active_clients }}</strong><a href="{% url 'agency:client_list' %}">Ver clientes</a></article>
+  <article class="metric-card"><span>Contratos vigentes</span><strong>{{ active_contracts }}</strong><small>{{ pending_signatures }} aguardando assinatura</small></article>
+  <article class="metric-card"><span>Materiais do mês</span><strong>{{ month_deliveries }}</strong><small>{{ published_deliveries }} publicados</small></article>
+  <article class="metric-card accent"><span>Saldo realizado</span><strong>R$ {{ balance|floatformat:2 }}</strong><small>Entradas menos saídas pagas</small></article>
+</section>
+<section class="dashboard-grid">
+  <article class="panel">
+    <div class="panel-head"><div><span class="eyebrow">Produção</span><h2>Próximos materiais</h2></div><a href="{% url 'agency:delivery_list' %}">Ver todos</a></div>
+    <div class="list-stack">
+      {% for item in upcoming_deliveries %}
+      <div class="list-row"><span class="date-box">{{ item.scheduled_for|date:"d" }}<small>{{ item.scheduled_for|date:"M" }}</small></span><div><strong>{{ item.title }}</strong><small>{{ item.contract.client.trade_name }} • {{ item.get_kind_display }}</small></div><span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span></div>
+      {% empty %}<div class="empty">Nenhum material planejado para este mês.</div>{% endfor %}
+    </div>
+  </article>
+  <aside class="panel finance-snapshot">
+    <div class="panel-head"><div><span class="eyebrow">Financeiro</span><h2>Fluxo do mês</h2></div><a href="{% url 'agency:finance' %}">Detalhes</a></div>
+    <div class="money-row income"><span>Entradas pagas</span><strong>R$ {{ income|floatformat:2 }}</strong></div>
+    <div class="money-row expense"><span>Saídas pagas</span><strong>R$ {{ expense|floatformat:2 }}</strong></div>
+    <div class="divider"></div>
+    <h3>Pendências vencidas</h3>
+    {% for entry in late_entries %}<div class="late-row"><div><strong>{{ entry.description }}</strong><small>{{ entry.client|default:"Sem cliente" }} • {{ entry.due_date|date:"d/m/Y" }}</small></div><b>R$ {{ entry.amount|floatformat:2 }}</b></div>{% empty %}<p class="muted">Nenhuma pendência vencida.</p>{% endfor %}
+  </aside>
+</section>
+{% endblock %}

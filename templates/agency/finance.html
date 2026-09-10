@@ -1,0 +1,7 @@
+{% extends 'agency/base.html' %}
+{% block title %}Financeiro{% endblock %}{% block section_name %}Financeiro{% endblock %}
+{% block content %}
+<div class="page-heading compact"><div><span class="eyebrow">Caixa • {{ month|date:"F Y" }}</span><h1>Gestão financeira</h1><p>Entradas, saídas e compromissos do mês.</p></div><a class="button button-primary" href="{% url 'admin:agency_financialentry_add' %}">+ Novo lançamento</a></div>
+<section class="metric-grid three"><article class="metric-card"><span>Entradas previstas</span><strong>R$ {{ income|floatformat:2 }}</strong></article><article class="metric-card"><span>Saídas previstas</span><strong>R$ {{ expense|floatformat:2 }}</strong></article><article class="metric-card accent"><span>Resultado previsto</span><strong>R$ {{ balance|floatformat:2 }}</strong></article></section>
+<div class="table-panel"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Cliente</th><th>Tipo</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>{% for entry in entries %}<tr><td>{{ entry.due_date|date:"d/m/Y" }}</td><td><strong>{{ entry.description }}</strong><small>{{ entry.category }}</small></td><td>{{ entry.client|default:"—" }}</td><td>{{ entry.get_kind_display }}</td><td>R$ {{ entry.amount|floatformat:2 }}</td><td><span class="badge">{{ entry.get_status_display }}</span></td><td><a href="{% url 'admin:agency_financialentry_change' entry.pk %}">Editar</a></td></tr>{% empty %}<tr><td colspan="7" class="empty">Nenhum lançamento neste mês.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

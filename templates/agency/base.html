@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{% block title %}Gestão{% endblock %} | Portal Verdade Ceará</title>
+  <link rel="stylesheet" href="{% static 'css/system.css' %}?v=2">
+  <script src="{% static 'js/system.js' %}" defer></script>
+</head>
+<body class="app-page">
+  <aside class="sidebar" id="sidebar">
+    <a class="sidebar-brand" href="{% url 'agency:dashboard' %}">
+      <img src="{% static 'images/logo-portal-verdade-ceara.png' %}" alt="Portal Verdade Ceará">
+    </a>
+    <nav class="sidebar-nav" aria-label="Navegação principal">
+      <a href="{% url 'agency:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><span>⌂</span> Visão geral</a>
+      <a href="{% url 'agency:client_list' %}" class="{% if 'client' in request.resolver_match.url_name %}active{% endif %}"><span>◉</span> Clientes</a>
+      <a href="{% url 'agency:contract_list' %}" class="{% if request.resolver_match.url_name == 'contract_list' %}active{% endif %}"><span>◇</span> Contratos</a>
+      <a href="{% url 'agency:delivery_list' %}" class="{% if request.resolver_match.url_name == 'delivery_list' %}active{% endif %}"><span>▦</span> Materiais</a>
+      <a href="{% url 'agency:finance' %}" class="{% if request.resolver_match.url_name == 'finance' %}active{% endif %}"><span>↗</span> Financeiro</a>
+    </nav>
+    <div class="sidebar-bottom">
+      {% if request.user.is_staff %}<a href="{% url 'admin:index' %}">Configurar e cadastrar</a>{% endif %}
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
+    </div>
+  </aside>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="menu-button" type="button" data-menu aria-label="Abrir menu">☰</button>
+      <div>
+        <span class="topbar-kicker">Portal Verdade Ceará</span>
+        <strong>{% block section_name %}Gestão{% endblock %}</strong>
+      </div>
+      <div class="user-chip"><span>{{ request.user.get_short_name|default:request.user.username|slice:":1"|upper }}</span><div>{{ request.user.get_full_name|default:request.user.username }}<small>Administrador</small></div></div>
+    </header>
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

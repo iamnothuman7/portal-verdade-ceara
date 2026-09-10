@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Entrar | Portal Verdade Ceará</title>
+  <link rel="stylesheet" href="{% static 'css/system.css' %}?v=2">
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-brand" aria-label="Portal Verdade Ceará">
+      <img src="{% static 'images/logo-portal-verdade-ceara.png' %}" alt="Portal Verdade Ceará">
+      <div>
+        <span class="eyebrow">Central de operações</span>
+        <h1>Sua agência,<br>sob controle.</h1>
+        <p>Clientes, contratos, produção e financeiro em um único lugar.</p>
+      </div>
+    </section>
+    <section class="login-card">
+      <img class="login-card-logo" src="{% static 'images/logo-portal-verdade-ceara.png' %}" alt="Portal Verdade Ceará">
+      <div class="login-card-head">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Acesso restrito</span>
+      </div>
+      <h2>Bem-vindo de volta</h2>
+      <p>Use suas credenciais para entrar no sistema.</p>
+      {% if form.errors %}<div class="alert">Usuário ou senha inválidos. Tente novamente.</div>{% endif %}
+      <form method="post" class="form-stack">
+        {% csrf_token %}
+        <label for="id_username">Usuário</label>
+        <input id="id_username" type="text" name="username" autocomplete="username" autofocus required>
+        <label for="id_password">Senha</label>
+        <input id="id_password" type="password" name="password" autocomplete="current-password" required>
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <button class="button button-primary button-block" type="submit">Entrar no sistema</button>
+      </form>
+      <small>Ambiente seguro • Portal Verdade Ceará</small>
+    </section>
+  </main>
+</body>
+</html>
