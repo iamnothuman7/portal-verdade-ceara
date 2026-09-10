@@ -3,8 +3,7 @@
 ## Arquitetura
 
 - Aplicação: Django + Gunicorn
-- Domínio Unicode: `portalverdadeceará.nabio.pro`
-- Domínio técnico IDN: `xn--portalverdadecear-npb.nabio.pro`
+- Domínio: `portalverdadeceara.nabio.pro`
 - Proxy público: Nginx nas portas 80 e 443
 - Aplicação interna: `127.0.0.1:8070`
 - Serviço: `portalverdadeceara.service`
@@ -58,7 +57,7 @@ Os valores ficam somente em `/var/www/apps/portalverdadeceara/shared/.env`, com 
 7. Instalar e iniciar somente `portalverdadeceara.service`.
 8. Validar `127.0.0.1:8070/health/`.
 9. Instalar `deploy/nginx-http.conf` como configuração Nginx exclusiva, executar `nginx -t` e recarregar o Nginx.
-10. Emitir o certificado somente para o domínio IDN sem alterar blocos coringa de outros projetos.
+10. Emitir o certificado exclusivamente com `certbot certonly --webroot -w /var/www/apps/portalverdadeceara/shared/acme -d portalverdadeceara.nabio.pro`, sem permitir que o Certbot edite blocos coringa de outros projetos.
 11. Substituir a configuração por `deploy/nginx-https.conf`, executar `nginx -t`, recarregar o Nginx, validar HTTPS e então habilitar HSTS.
 
 ## Atualização
@@ -90,7 +89,7 @@ pg_dump portalverdadeceara_prod > /var/www/apps/portalverdadeceara/shared/backup
 - Logs do serviço: `journalctl -u portalverdadeceara.service -n 100 --no-pager`
 - Logs da aplicação: `/var/www/apps/portalverdadeceara/shared/logs/`
 - Health interno: `curl --fail http://127.0.0.1:8070/health/`
-- Health público: `curl --fail https://xn--portalverdadecear-npb.nabio.pro/health/`
+- Health público: `curl --fail https://portalverdadeceara.nabio.pro/health/`
 - Teste Nginx: `nginx -t`
 - Certificados: `certbot certificates`
 - Renovação: `certbot renew --dry-run`
