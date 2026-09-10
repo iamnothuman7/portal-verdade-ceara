@@ -57,8 +57,9 @@ Os valores ficam somente em `/var/www/apps/portalverdadeceara/shared/.env`, com 
 6. Apontar `current` para a release testada.
 7. Instalar e iniciar somente `portalverdadeceara.service`.
 8. Validar `127.0.0.1:8070/health/`.
-9. Instalar a configuração Nginx exclusiva, executar `nginx -t` e recarregar o Nginx.
-10. Emitir o certificado somente para o domínio IDN, validar HTTPS e então habilitar HSTS.
+9. Instalar `deploy/nginx-http.conf` como configuração Nginx exclusiva, executar `nginx -t` e recarregar o Nginx.
+10. Emitir o certificado somente para o domínio IDN sem alterar blocos coringa de outros projetos.
+11. Substituir a configuração por `deploy/nginx-https.conf`, executar `nginx -t`, recarregar o Nginx, validar HTTPS e então habilitar HSTS.
 
 ## Atualização
 
