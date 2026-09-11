@@ -1,0 +1,8 @@
+<article class="production-card task-card" {% if item.can_edit %}draggable="true"{% endif %} data-unified="true" data-status-url="{{ item.status_url }}" data-version="{{ item.version }}">
+  <div class="card-meta"><span class="badge">{% if item.kind == 'delivery' %}Material · {% endif %}{{ item.kind_label }}</span>{% if item.priority != 'normal' %}<span class="badge priority-{{ item.priority }}">{{ item.priority_label }}</span>{% endif %}</div>
+  {% if item.detail_url %}<a href="{{ item.detail_url }}"><h2>{{ item.title }}</h2></a>{% else %}<h2>{{ item.title }}</h2>{% endif %}
+  <p>{{ item.client|default:'Atividade interna' }}</p>
+  {% if item.checklist_total %}<small>Checklist {{ item.checklist_done }}/{{ item.checklist_total }}</small>{% endif %}
+  <div class="card-footer"><span class="mini-avatar" title="{{ item.assignee|default:'Sem responsável' }}">{{ item.assignee.name|default:'?'|slice:':1'|upper }}</span><span>{{ item.assignee|default:'Sem responsável' }}</span><time class="{% if item.is_overdue %}negative{% endif %}">{{ item.due_date|date:'d/m'|default:'Sem prazo' }}</time></div>
+  {% if item.can_edit %}<form class="status-form" method="post" action="{{ item.status_url }}">{% csrf_token %}<input type="hidden" name="version" value="{{ item.version }}"><label class="sr-only" for="stage-{{ item.uid }}">Etapa de {{ item.title }}</label><select id="stage-{{ item.uid }}" name="status">{% for choice in item.status_choices %}<option value="{{ choice.value }}" data-board-status="{{ choice.stage }}" {% if item.status == choice.value %}selected{% endif %}>{{ choice.label }}</option>{% endfor %}</select><button type="submit" class="small-button">Mover</button></form>{% endif %}
+</article>

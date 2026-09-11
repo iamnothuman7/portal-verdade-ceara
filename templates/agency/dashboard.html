@@ -5,7 +5,7 @@
 {% block content %}
 <div class="dashboard-workspace">
 <div class="page-heading">
-  <div><span class="eyebrow">Resumo operacional</span><h1>Olá, {{ request.user.get_short_name|default:request.user.username }}.</h1><p>Acompanhe o mês atual e veja o que precisa de atenção.</p></div>
+  <div><span class="eyebrow">Resumo operacional</span><h1>{{ organization.name }}</h1><p>Acompanhe o mês atual e veja o que precisa de atenção.</p></div>
   {% if can_edit_clients %}<a class="button button-primary" href="{% url 'agency:client_create' %}">+ Novo cliente</a>{% endif %}
 </div>
 <section class="metric-grid">

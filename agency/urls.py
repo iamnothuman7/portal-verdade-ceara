@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import views
 from . import work_views
+from . import production
 
 app_name = "agency"
 
@@ -11,7 +12,8 @@ urlpatterns = [
     path("equipe/", work_views.team_list, name="team_list"),
     path("equipe/novo/", work_views.team_form, name="team_create"),
     path("equipe/<int:pk>/editar/", work_views.team_form, name="team_edit"),
-    path("tarefas/", work_views.task_list, name="task_list"),
+    path("producao/", production.workspace, name="production_workspace"),
+    path("tarefas/", production.workspace, {'source_filter': 'task'}, name="task_list"),
     path("tarefas/nova/", work_views.task_form, name="task_create"),
     path("tarefas/<int:pk>/", work_views.task_detail, name="task_detail"),
     path("tarefas/<int:pk>/editar/", work_views.task_form, name="task_edit"),
@@ -31,7 +33,7 @@ urlpatterns = [
     path("contratos/<int:pk>/visualizar/", views.contract_view, name="contract_view"),
     path("contratos/<int:pk>/editar/", views.contract_update, name="contract_edit"),
     path("contratos/<int:pk>/pdf/", views.contract_pdf, name="contract_pdf"),
-    path("materiais/", views.delivery_list, name="delivery_list"),
+    path("materiais/", production.workspace, {'source_filter': 'delivery'}, name="delivery_list"),
     path("materiais/novo/", views.delivery_form, name="delivery_create"),
     path("materiais/<int:pk>/editar/", views.delivery_form, name="delivery_edit"),
     path("financeiro/", views.finance, name="finance"),

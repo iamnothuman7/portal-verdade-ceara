@@ -94,7 +94,7 @@ class WorkspaceTests(TestCase):
         response = self.client.get(reverse('agency:task_list'), {'assignee':self.member.pk})
         columns = response.context['columns']
         self.assertEqual(sum(len(c['items']) for c in columns), 1)
-        self.assertEqual(columns[0]['items'][0].pk, self.task.pk)
+        self.assertEqual(columns[0]['items'][0]['uid'], f'task-{self.task.pk}')
         self.assertEqual(self.client.get(reverse('agency:task_list'), {'q':'missing'}).context['total'],0)
         self.client.force_login(self.worker)
         self.assertEqual(self.client.get(reverse('agency:task_list'), {'assignee':'me'}).context['total'],1)

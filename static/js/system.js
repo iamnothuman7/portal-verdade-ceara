@@ -39,8 +39,15 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault(); lane.classList.remove('drop-target');
       if (!dragged || dragged.closest('.production-board') !== lane.closest('.production-board')) return;
       const form = dragged.querySelector('form');
+      if (!form) return;
       const data = new FormData(form);
-      data.set('status', lane.dataset.dropStatus);
+      let status = lane.dataset.dropStatus;
+      if (dragged.dataset.unified === 'true') {
+        const option = [...form.querySelectorAll('option')].find(option => option.dataset.boardStatus === status);
+        if (!option) { notify('Esta etapa não se aplica a este item. Use o seletor do cartão.'); return; }
+        status = option.value;
+      }
+      data.set('status', status);
       moveCard(dragged.dataset.statusUrl, data);
     });
   });
