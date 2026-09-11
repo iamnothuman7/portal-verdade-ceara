@@ -1,6 +1,6 @@
 {% load static %}
 <!doctype html>
-<html lang="pt-br" data-theme="{{ organization.default_theme }}" data-density="{{ organization.density }}" style="--brand: {{ organization.accent_color }};">
+<html lang="pt-br" class="login-root" data-theme="dark" style="--brand: {{ organization.accent_color }};">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,6 +9,7 @@
   <link rel="icon" type="image/png" href="{% static 'images/favicon-portal.png' %}">
   <link rel="apple-touch-icon" href="{% static 'images/favicon-portal.png' %}">
   <link rel="stylesheet" href="{% static 'css/system.css' %}?v=3">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
 </head>
 <body class="login-page">
   <main class="login-shell">
@@ -28,13 +29,13 @@
       </div>
       <h2>Bem-vindo de volta</h2>
       <p>Use suas credenciais para entrar no sistema.</p>
-      {% if form.errors %}<div class="alert">Usuário ou senha inválidos. Tente novamente.</div>{% endif %}
+      {% if form.errors %}<div class="alert" id="login-error" role="alert">Usuário ou senha inválidos. Tente novamente.</div>{% endif %}
       <form method="post" class="form-stack">
         {% csrf_token %}
         <label for="id_username">Usuário</label>
-        <input id="id_username" type="text" name="username" autocomplete="username" autofocus required>
+        <input id="id_username" type="text" name="username" value="{{ form.username.value|default_if_none:'' }}" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required {% if form.errors %}aria-invalid="true" aria-describedby="login-error"{% endif %}>
         <label for="id_password">Senha</label>
-        <input id="id_password" type="password" name="password" autocomplete="current-password" required>
+        <input id="id_password" type="password" name="password" autocomplete="current-password" required {% if form.errors %}aria-invalid="true" aria-describedby="login-error"{% endif %}>
         {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
         <button class="button button-primary button-block" type="submit">Entrar no sistema</button>
       </form>

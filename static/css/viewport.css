@@ -1,0 +1,63 @@
+/* Fixed application frame; long records scroll inside the working surface. */
+html { scrollbar-color: #91434d #111114; scrollbar-width: thin; }
+.app-page {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.app-shell > .topbar { flex: 0 0 auto; }
+.app-shell > .content {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.app-page * { scrollbar-width: thin; scrollbar-color: #91434d #ffffff05; }
+.app-page *::-webkit-scrollbar { width: 7px; height: 7px; }
+.app-page *::-webkit-scrollbar-track { background: #ffffff05; border-radius: 10px; }
+.app-page *::-webkit-scrollbar-thumb { background: #91434d; border: 2px solid transparent; border-radius: 10px; background-clip: padding-box; }
+.app-page *::-webkit-scrollbar-thumb:hover { background-color: #c71927; }
+html[data-theme=light] .app-page * { scrollbar-color: #b26770 #e9e9ef; }
+html[data-theme=light] .money-row.income strong { color: #15803d; }
+html[data-theme=light] .money-row.expense strong { color: #be123c; }
+.sidebar { overscroll-behavior: contain; }
+.dashboard-content #workspace-feedback:empty { display: none; }
+.dashboard-scroll:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 6px; }
+@media (min-width: 901px) and (min-height: 650px) {
+  .app-shell > .dashboard-content { display: flex; flex-direction: column; overflow: hidden; padding: 18px 24px; scrollbar-gutter: auto; }
+  .dashboard-workspace {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) minmax(0, .65fr);
+    gap: 14px;
+    min-height: 0;
+    flex: 1 1 0;
+  }
+  .dashboard-workspace > .page-heading { margin: 0; }
+  .dashboard-workspace .page-heading h1 { font-size: 1.5rem; }
+  .dashboard-workspace .page-heading .eyebrow { margin-bottom: 5px; }
+  .dashboard-workspace > .metric-grid { margin: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dashboard-workspace .metric-card { min-height: 96px; padding: 14px 18px; }
+  .dashboard-workspace .metric-card > strong { font-size: 1.5rem; margin: 8px 0 5px; }
+  .dashboard-workspace > .dashboard-grid { min-height: 0; gap: 14px; }
+  .dashboard-workspace .panel { display: flex; flex-direction: column; min-height: 0; padding: 16px 18px; }
+  .dashboard-workspace .panel-head { flex: 0 0 auto; margin-bottom: 10px; }
+  .dashboard-workspace .panel-head .eyebrow { margin-bottom: 4px; }
+  .dashboard-workspace .dashboard-scroll { flex: 1 1 0; min-height: 0; overflow: auto; overscroll-behavior: contain; padding-right: 5px; }
+  .dashboard-workspace .list-row { padding: 9px 0; }
+  .dashboard-workspace .empty { padding: 18px 12px; }
+  .dashboard-workspace .money-row { padding: 8px 0; }
+  .dashboard-workspace .divider { margin: 8px 0 12px; }
+  .dashboard-workspace .dashboard-tasks { margin-top: 0; }
+}
+@media (max-width: 900px), (max-height: 649px) {
+  .dashboard-workspace .dashboard-scroll { overflow: visible; }
+}

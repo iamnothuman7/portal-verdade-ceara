@@ -1,7 +1,9 @@
 {% extends 'agency/base.html' %}
 {% block title %}Visão geral{% endblock %}
 {% block section_name %}Visão geral{% endblock %}
+{% block content_class %}dashboard-content{% endblock %}
 {% block content %}
+<div class="dashboard-workspace">
 <div class="page-heading">
   <div><span class="eyebrow">Resumo operacional</span><h1>Olá, {{ request.user.get_short_name|default:request.user.username }}.</h1><p>Acompanhe o mês atual e veja o que precisa de atenção.</p></div>
   {% if can_edit_clients %}<a class="button button-primary" href="{% url 'agency:client_create' %}">+ Novo cliente</a>{% endif %}
@@ -15,7 +17,7 @@
 <section class="dashboard-grid">
 {% if can_view_deliveries %}  <article class="panel">
     <div class="panel-head"><div><span class="eyebrow">Produção</span><h2>Próximos materiais</h2></div><a href="{% url 'agency:delivery_list' %}">Ver todos</a></div>
-    <div class="list-stack">
+    <div class="list-stack dashboard-scroll" tabindex="0" role="region" aria-label="Próximos materiais">
       {% for item in upcoming_deliveries %}
       <div class="list-row"><span class="date-box">{{ item.scheduled_for|date:"d" }}<small>{{ item.scheduled_for|date:"M" }}</small></span><div><strong>{{ item.title }}</strong><small>{{ item.contract.client.trade_name }} • {{ item.get_kind_display }}</small></div><span class="badge badge-{{ item.status }}">{{ item.get_status_display }}</span></div>
       {% empty %}<div class="empty">Nenhum material planejado para este mês.</div>{% endfor %}
@@ -23,12 +25,15 @@
   </article>{% endif %}
   {% if can_finance %}<aside class="panel finance-snapshot">
     <div class="panel-head"><div><span class="eyebrow">Financeiro</span><h2>Fluxo do mês</h2></div><a href="{% url 'agency:finance' %}">Detalhes</a></div>
+    <div class="dashboard-scroll" tabindex="0" role="region" aria-label="Resumo financeiro e pendências">
     <div class="money-row income"><span>Entradas pagas</span><strong>R$ {{ income|floatformat:"2g" }}</strong></div>
     <div class="money-row expense"><span>Saídas pagas</span><strong>R$ {{ expense|floatformat:"2g" }}</strong></div>
     <div class="divider"></div>
     <h3>Pendências vencidas</h3>
     {% for entry in late_entries %}<div class="late-row"><div><strong>{{ entry.description }}</strong><small>{{ entry.client|default:"Sem cliente" }} • {{ entry.due_date|date:"d/m/Y" }}</small></div><b>R$ {{ entry.amount|floatformat:"2g" }}</b></div>{% empty %}<p class="muted">Nenhuma pendência vencida.</p>{% endfor %}
+    </div>
   </aside>{% endif %}
 </section>
-{% if can_view_tasks %}<section class="panel dashboard-tasks"><div class="panel-head"><div><span class="eyebrow">Organização</span><h2>Próximas tarefas da equipe</h2></div><a href="{% url 'agency:task_list' %}">{{ open_tasks }} em aberto · Ver quadro →</a></div>{% for task in upcoming_tasks %}<a class="list-row simple" href="{% url 'agency:task_detail' task.pk %}"><div><strong>{{ task.title }}</strong><small>{{ task.assignee|default:'Sem responsável' }} · {{ task.due_date|date:'d/m/Y'|default:'Sem prazo' }}</small></div><span class="badge priority-{{ task.priority }}">{% if task.is_overdue %}Atrasada{% else %}{{ task.get_status_display }}{% endif %}</span></a>{% empty %}<div class="empty">Nenhuma tarefa pendente. {% if can_edit_tasks %}<a href="{% url 'agency:task_create' %}">Criar uma tarefa →</a>{% endif %}</div>{% endfor %}</section>{% endif %}
+{% if can_view_tasks %}<section class="panel dashboard-tasks"><div class="panel-head"><div><span class="eyebrow">Organização</span><h2>Próximas tarefas da equipe</h2></div><a href="{% url 'agency:task_list' %}">{{ open_tasks }} em aberto · Ver quadro →</a></div><div class="dashboard-scroll" tabindex="0" role="region" aria-label="Próximas tarefas">{% for task in upcoming_tasks %}<a class="list-row simple" href="{% url 'agency:task_detail' task.pk %}"><div><strong>{{ task.title }}</strong><small>{{ task.assignee|default:'Sem responsável' }} · {{ task.due_date|date:'d/m/Y'|default:'Sem prazo' }}</small></div><span class="badge priority-{{ task.priority }}">{% if task.is_overdue %}Atrasada{% else %}{{ task.get_status_display }}{% endif %}</span></a>{% empty %}<div class="empty">Nenhuma tarefa pendente. {% if can_edit_tasks %}<a href="{% url 'agency:task_create' %}">Criar uma tarefa →</a>{% endif %}</div>{% endfor %}</div></section>{% endif %}
+</div>
 {% endblock %}

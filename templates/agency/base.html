@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{% static 'css/system.css' %}?v=3">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}">
   <link rel="stylesheet" href="{% static 'css/preferences.css' %}">
+  <link rel="stylesheet" href="{% static 'css/viewport.css' %}">
   <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/system.js' %}" defer></script>
 </head>
@@ -51,7 +52,7 @@
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Alternar tema claro e escuro" title="Alternar tema">☼</button>
       <div class="user-chip"><span>{{ request.user.get_short_name|default:request.user.username|slice:":1"|upper }}</span><div>{{ request.user.get_full_name|default:request.user.username }}<small>{% if request.user.is_superuser %}Superusuário{% elif portal_member %}{{ portal_member.get_role_display }}{% else %}Administrador{% endif %}</small></div></div>
     </header>
-    <main class="content" id="main-content">
+    <main class="content {% block content_class %}{% endblock %}" id="main-content">
       <div id="workspace-feedback" role="status" aria-live="polite"></div>
       {% if messages %}<div class="toast-stack">{% for message in messages %}<div class="toast toast-{{ message.tags }}"><span>✓</span>{{ message }}</div>{% endfor %}</div>{% endif %}
       {% block content %}{% endblock %}
