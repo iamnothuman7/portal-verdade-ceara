@@ -3,7 +3,7 @@ from decimal import Decimal
 from django import forms
 from django.db import transaction
 
-from .models import Client, ContentDelivery, Contract, ContractTemplate, DeliverableQuota, FinancialEntry
+from .models import Client, ContentDelivery, Contract, ContractTemplate, DeliverableQuota, FinancialEntry, TeamMember, Task, OrganizationSettings
 
 
 QUOTA_FIELDS = (
@@ -56,6 +56,8 @@ class ContractBuilderForm(forms.ModelForm):
             for kind, _ in QUOTA_FIELDS:
                 self.fields[f"{kind}_quantity"].initial = quota_map.get(kind, 0)
         for field in self.fields.values():
+            if isinstance(field.widget, forms.DateInput):
+                field.widget.format = "%Y-%m-%d"
             field.widget.attrs.setdefault("class", "studio-input")
 
     def quota_values(self):
@@ -81,6 +83,8 @@ class ContractBuilderForm(forms.ModelForm):
             "dia_vencimento": contract.billing_day,
             "pacote_mensal": package,
         }
+        organization = OrganizationSettings.current()
+        context.update({"empresa_nome": organization.name, "empresa_razao_social": organization.legal_name or organization.name, "empresa_documento": organization.tax_id, "empresa_endereco": organization.address, "empresa_email": organization.email, "empresa_telefone": organization.phone, "empresa_cidade": organization.city})
         contract.terms = contract.template.render(context)
         if commit:
             contract.save()
@@ -97,6 +101,8 @@ class StyledModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
+            if isinstance(field.widget, forms.DateInput):
+                field.widget.format = "%Y-%m-%d"
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs.setdefault("class", "studio-input")
 
@@ -117,7 +123,7 @@ class ClientForm(StyledModelForm):
 class ContentDeliveryForm(StyledModelForm):
     class Meta:
         model = ContentDelivery
-        fields = ("contract", "kind", "title", "scheduled_for", "status", "notes")
+        fields = ("contract", "kind", "title", "scheduled_for", "status", "assignee", "notes")
         widgets = {
             "scheduled_for": forms.DateInput(attrs={"type": "date"}),
             "notes": forms.Textarea(attrs={"rows": 4}),
@@ -126,12 +132,21 @@ class ContentDeliveryForm(StyledModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["contract"].queryset = Contract.objects.select_related("client").exclude(status=Contract.Status.CANCELLED)
+        self.fields["assignee"].queryset = TeamMember.objects.filter(is_active=True) | TeamMember.objects.filter(pk=self.instance.assignee_id)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        from django.utils import timezone
+        instance.published_at = (instance.published_at or timezone.now()) if instance.status == ContentDelivery.Status.PUBLISHED else None
+        if commit:
+            instance.save()
+        return instance
 
 
 class FinancialEntryForm(StyledModelForm):
     class Meta:
         model = FinancialEntry
-        fields = ("kind", "description", "category", "amount", "due_date", "paid_date", "status", "client", "contract", "notes")
+        fields = ("kind", "description", "category", "amount", "due_date", "paid_date", "status", "payment_method", "counterparty", "client", "contract", "notes")
         widgets = {
             "amount": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
             "due_date": forms.DateInput(attrs={"type": "date"}),
@@ -143,6 +158,9 @@ class FinancialEntryForm(StyledModelForm):
         super().__init__(*args, **kwargs)
         self.fields["client"].queryset = Client.objects.order_by("trade_name")
         self.fields["contract"].queryset = Contract.objects.select_related("client").order_by("client__trade_name", "title")
+        if self.instance.pk and self.instance.billing_month:
+            for name in ("contract", "client", "kind"):
+                self.fields[name].disabled = True
 
 
 class ContractTemplateForm(forms.ModelForm):

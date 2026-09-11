@@ -3,9 +3,34 @@ import uuid
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+
+
+class OrganizationSettings(models.Model):
+    name = models.CharField("nome exibido", max_length=100, default="Portal Verdade Ceará")
+    legal_name = models.CharField("razão social", max_length=180, blank=True)
+    tax_id = models.CharField("CPF / CNPJ", max_length=24, blank=True)
+    email = models.EmailField("e-mail institucional", blank=True)
+    phone = models.CharField("telefone", max_length=24, blank=True)
+    address = models.CharField("endereço", max_length=240, blank=True)
+    city = models.CharField("cidade / UF", max_length=100, default="Fortaleza / CE")
+    accent_color = models.CharField("cor de destaque", max_length=7, default="#c71927", validators=[RegexValidator(r"^#[0-9a-fA-F]{6}$", "Informe uma cor hexadecimal válida.")])
+    default_theme = models.CharField("tema padrão", max_length=8, choices=[("dark", "Escuro"), ("light", "Claro")], default="dark")
+    density = models.CharField("tamanho da interface", max_length=12, choices=[("compact", "Compacto"), ("comfortable", "Confortável")], default="compact")
+    logo = models.ImageField("logo institucional", upload_to="branding/", blank=True)
+    pdf_footer = models.CharField("rodapé dos documentos", max_length=100, blank=True)
+
+    class Meta:
+        verbose_name = "configuração da empresa"
+        verbose_name_plural = "configurações da empresa"
+
+    @classmethod
+    def current(cls):
+        return cls.objects.filter(pk=1).first() or cls(pk=1)
 
 
 class Client(models.Model):
@@ -53,7 +78,8 @@ class ContractTemplate(models.Model):
             "Variáveis disponíveis: [[cliente_nome]], [[cliente_razao_social]], "
             "[[cliente_documento]], [[cliente_endereco]], [[contrato_nome]], "
             "[[data_inicio]], [[data_fim]], [[valor_mensal]], [[dia_vencimento]] "
-            "e [[pacote_mensal]]."
+            "e [[pacote_mensal]]. Dados da empresa: [[empresa_nome]], [[empresa_razao_social]], "
+            "[[empresa_documento]], [[empresa_endereco]], [[empresa_email]], [[empresa_telefone]], [[empresa_cidade]]."
         ),
     )
     is_active = models.BooleanField("ativo", default=True)
@@ -167,6 +193,30 @@ class DeliverableQuota(models.Model):
         return f"{self.get_kind_display()}: {self.quantity}/mês"
 
 
+class TeamMember(models.Model):
+    class Role(models.TextChoices):
+        MANAGER = "manager", "Gestão"
+        FINANCE = "finance", "Financeiro"
+        PRODUCTION = "production", "Produção"
+
+    name = models.CharField("nome", max_length=140)
+    role = models.CharField("perfil de acesso", max_length=16, choices=Role.choices, default=Role.PRODUCTION)
+    job_title = models.CharField("função / cargo", max_length=100, blank=True)
+    email = models.EmailField("e-mail", blank=True)
+    phone = models.CharField("telefone", max_length=24, blank=True)
+    is_active = models.BooleanField("ativo", default=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="team_member")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("name",)
+        verbose_name = "integrante da equipe"
+        verbose_name_plural = "equipe"
+
+    def __str__(self):
+        return self.name
+
+
 class ContentDelivery(models.Model):
     class Status(models.TextChoices):
         PLANNED = "planned", "Planejado"
@@ -182,6 +232,7 @@ class ContentDelivery(models.Model):
     published_at = models.DateTimeField("publicado em", null=True, blank=True)
     status = models.CharField("status", max_length=12, choices=Status.choices, default=Status.PLANNED)
     notes = models.TextField("observações", blank=True)
+    assignee = models.ForeignKey(TeamMember, verbose_name="responsável", on_delete=models.SET_NULL, null=True, blank=True, related_name="deliveries")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -195,6 +246,13 @@ class ContentDelivery(models.Model):
 
 
 class FinancialEntry(models.Model):
+    class PaymentMethod(models.TextChoices):
+        PIX = "pix", "Pix"
+        TRANSFER = "transfer", "Transferência"
+        CARD = "card", "Cartão"
+        CASH = "cash", "Dinheiro"
+        BOLETO = "boleto", "Boleto"
+        OTHER = "other", "Outro"
     class Kind(models.TextChoices):
         INCOME = "income", "Entrada"
         EXPENSE = "expense", "Saída"
@@ -207,6 +265,9 @@ class FinancialEntry(models.Model):
     kind = models.CharField("tipo", max_length=8, choices=Kind.choices)
     description = models.CharField("descrição", max_length=180)
     category = models.CharField("categoria", max_length=80, blank=True)
+    payment_method = models.CharField("forma de pagamento", max_length=12, choices=PaymentMethod.choices, blank=True)
+    counterparty = models.CharField("pagador / favorecido", max_length=140, blank=True)
+    billing_month = models.DateField("competência gerada pelo contrato", null=True, blank=True, editable=False)
     amount = models.DecimalField("valor", max_digits=12, decimal_places=2)
     due_date = models.DateField("vencimento")
     paid_date = models.DateField("data do pagamento", null=True, blank=True)
@@ -221,6 +282,7 @@ class FinancialEntry(models.Model):
         ordering = ("-due_date", "-id")
         verbose_name = "lançamento financeiro"
         verbose_name_plural = "lançamentos financeiros"
+        constraints = [models.UniqueConstraint(fields=("contract", "billing_month"), name="unique_contract_billing_month")]
 
     def __str__(self):
         return self.description
@@ -228,5 +290,75 @@ class FinancialEntry(models.Model):
     def clean(self):
         if self.status == self.Status.PAID and not self.paid_date:
             raise ValidationError({"paid_date": "Informe a data do pagamento."})
-        if self.amount <= 0:
+        if self.amount is not None and self.amount <= 0:
             raise ValidationError({"amount": "O valor deve ser maior que zero."})
+        if self.contract_id and self.client_id and self.contract.client_id != self.client_id:
+            raise ValidationError({"contract": "O contrato deve pertencer ao cliente selecionado."})
+        if self.paid_date and self.status != self.Status.PAID:
+            raise ValidationError({"paid_date": "A data de pagamento só deve ser preenchida para lançamentos pagos."})
+
+
+class Task(models.Model):
+    class Status(models.TextChoices):
+        TODO = "todo", "A fazer"
+        DOING = "doing", "Em andamento"
+        REVIEW = "review", "Em revisão"
+        DONE = "done", "Concluída"
+
+    class Priority(models.TextChoices):
+        LOW = "low", "Baixa"
+        NORMAL = "normal", "Normal"
+        HIGH = "high", "Alta"
+        URGENT = "urgent", "Urgente"
+
+    title = models.CharField("título", max_length=180)
+    description = models.TextField("descrição", blank=True)
+    status = models.CharField("etapa", max_length=10, choices=Status.choices, default=Status.TODO)
+    priority = models.CharField("prioridade", max_length=10, choices=Priority.choices, default=Priority.NORMAL)
+    due_date = models.DateField("prazo", null=True, blank=True)
+    assignee = models.ForeignKey(TeamMember, verbose_name="responsável", on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
+    client = models.ForeignKey(Client, verbose_name="cliente", on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
+    delivery = models.ForeignKey(ContentDelivery, verbose_name="material vinculado", on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="created_portal_tasks")
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("due_date", "-created_at")
+        verbose_name = "tarefa"
+        verbose_name_plural = "tarefas"
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_overdue(self):
+        return bool(self.due_date and self.due_date < timezone.localdate() and self.status != self.Status.DONE)
+
+    def clean(self):
+        if self.delivery_id and self.client_id and self.delivery.contract.client_id != self.client_id:
+            raise ValidationError({"delivery": "O material deve pertencer ao cliente selecionado."})
+
+    def save(self, *args, **kwargs):
+        self.completed_at = (self.completed_at or timezone.now()) if self.status == self.Status.DONE else None
+        super().save(*args, **kwargs)
+
+
+class TaskChecklistItem(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="checklist")
+    title = models.CharField(max_length=200)
+    is_done = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ("id",)
+
+
+class TaskComment(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    content = models.TextField(max_length=3000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)

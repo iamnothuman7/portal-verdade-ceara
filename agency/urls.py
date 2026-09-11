@@ -1,10 +1,22 @@
 from django.urls import path
 
 from . import views
+from . import work_views
 
 app_name = "agency"
 
 urlpatterns = [
+    path("ajuda/", work_views.help_page, name="help"),
+    path("configuracoes/", work_views.settings_form, name="settings_edit"),
+    path("equipe/", work_views.team_list, name="team_list"),
+    path("equipe/novo/", work_views.team_form, name="team_create"),
+    path("equipe/<int:pk>/editar/", work_views.team_form, name="team_edit"),
+    path("tarefas/", work_views.task_list, name="task_list"),
+    path("tarefas/nova/", work_views.task_form, name="task_create"),
+    path("tarefas/<int:pk>/", work_views.task_detail, name="task_detail"),
+    path("tarefas/<int:pk>/editar/", work_views.task_form, name="task_edit"),
+    path("tarefas/<int:pk>/etapa/", work_views.task_status, name="task_status"),
+    path("materiais/<int:pk>/etapa/", work_views.delivery_status, name="delivery_status"),
     path("", views.dashboard, name="dashboard"),
     path("clientes/", views.client_list, name="client_list"),
     path("clientes/novo/", views.client_form, name="client_create"),
@@ -23,6 +35,9 @@ urlpatterns = [
     path("materiais/<int:pk>/editar/", views.delivery_form, name="delivery_edit"),
     path("financeiro/", views.finance, name="finance"),
     path("financeiro/relatorio.pdf", views.financial_report_pdf, name="financial_report_pdf"),
+    path("financeiro/exportar.csv", views.financial_csv, name="financial_csv"),
+    path("financeiro/gerar-mensalidades/", views.financial_generate, name="financial_generate"),
+    path("financeiro/<int:pk>/pagar/", views.financial_settle, name="financial_settle"),
     path("financeiro/novo/", views.financial_entry_form, name="financial_entry_create"),
     path("financeiro/<int:pk>/editar/", views.financial_entry_form, name="financial_entry_edit"),
 ]

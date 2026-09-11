@@ -14,6 +14,15 @@ Sistema privado para administrar a operação comercial e financeira do Portal V
 - financeiro com previsto x realizado, filtros, contas pendentes e atrasadas;
 - relatórios financeiros e contratos em PDF A4 com papel timbrado;
 - cadastros personalizados e área administrativa avançada com a identidade do Portal.
+- painel compacto inspirado na área de hospedagens NAVIE, com temas claro/escuro;
+- equipe com perfis Gestão, Financeiro e Produção e acesso individual opcional;
+- tarefas em Kanban, lista e calendário, responsáveis, prioridades, checklist e comentários;
+- movimentação de tarefas e materiais com proteção contra alterações concorrentes;
+- evolução de caixa, despesas por categoria, baixa rápida e exportação CSV;
+- geração de mensalidades pendentes de contratos assinados, sem duplicar competências;
+- personalização de nome, cor, logo, densidade, dados da empresa e rodapé dos PDFs.
+
+Consulte o [guia de operação](docs/guia-operacao.md) para configurar a equipe, personalizar contratos e usar cada módulo. O favicon é independente da logo institucional. Dados de demonstração e arquivos de autenticação temporários não são versionados.
 
 ## Desenvolvimento
 

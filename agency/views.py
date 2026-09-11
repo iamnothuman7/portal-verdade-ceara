@@ -6,12 +6,15 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
+from django.db import transaction
+from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from .forms import ClientForm, ContentDeliveryForm, ContractBuilderForm, ContractSignatureForm, ContractTemplateForm, FinancialEntryForm
-from .models import Client, ContentDelivery, Contract, ContractTemplate, FinancialEntry
+from .models import Client, ContentDelivery, Contract, ContractTemplate, FinancialEntry, TeamMember, Task
+from .access import capabilities
 from .pdf import build_contract_pdf, build_financial_report_pdf
 
 
@@ -67,7 +70,34 @@ def finance_context(request):
     pending_income = projected.filter(kind=FinancialEntry.Kind.INCOME, status=FinancialEntry.Status.PENDING).aggregate(total=Sum("amount"))["total"] or Decimal("0")
     pending_expense = projected.filter(kind=FinancialEntry.Kind.EXPENSE, status=FinancialEntry.Status.PENDING).aggregate(total=Sum("amount"))["total"] or Decimal("0")
     overdue = projected.filter(status=FinancialEntry.Status.PENDING, due_date__lt=timezone.localdate())
+    category_rows = list(projected.filter(kind=FinancialEntry.Kind.EXPENSE).values("category").annotate(total=Sum("amount")).order_by("-total"))
+    for row in category_rows:
+        row["percent"] = round(float(row["total"] / projected_expense * 100), 1) if projected_expense else 0
+    cash_rows = list(realized.values("paid_date").annotate(income=Sum("amount", filter=Q(kind=FinancialEntry.Kind.INCOME)), expense=Sum("amount", filter=Q(kind=FinancialEntry.Kind.EXPENSE))).order_by("paid_date"))
+    balance = Decimal("0")
+    for row in cash_rows:
+        row["income"] = row["income"] or Decimal("0")
+        row["expense"] = row["expense"] or Decimal("0")
+        balance += row["income"] - row["expense"]
+        row["balance"] = balance
+    balances = [Decimal("0")] + [row["balance"] for row in cash_rows]
+    floor, ceiling = min(balances), max(balances)
+    spread = ceiling - floor or Decimal("1")
+    cash_points = " ".join(f"{15 + index * 570 / max(len(balances) - 1, 1):.1f},{165 - float((value - floor) / spread) * 140:.1f}" for index, value in enumerate(balances))
+    tab = request.GET.get("tab", "summary")
+    if tab not in ("summary", "entries", "cash"):
+        tab = "summary"
+    tabs = {}
+    for key in ("summary", "entries", "cash"):
+        params = request.GET.copy()
+        params["tab"] = key
+        tabs[key] = "?" + params.urlencode()
     return {
+        "category_rows": category_rows,
+        "cash_rows": cash_rows,
+        "cash_points": cash_points,
+        "finance_tab": tab,
+        "finance_tabs": tabs,
         "entries": entries,
         "month": start,
         "month_value": start.strftime("%Y-%m"),
@@ -108,6 +138,10 @@ def dashboard(request):
         "balance": income - expense,
         "upcoming_deliveries": deliveries.exclude(status=ContentDelivery.Status.CANCELLED).select_related("contract__client")[:8],
         "late_entries": FinancialEntry.objects.filter(status=FinancialEntry.Status.PENDING, due_date__lt=timezone.localdate()).select_related("client")[:6],
+        "open_tasks": Task.objects.exclude(status=Task.Status.DONE).count(),
+        "late_tasks": Task.objects.exclude(status=Task.Status.DONE).filter(due_date__lt=timezone.localdate()).count(),
+        "upcoming_tasks": Task.objects.exclude(status=Task.Status.DONE).select_related("assignee", "client").order_by("due_date")[:6],
+        "team_count": TeamMember.objects.filter(is_active=True).count(),
     }
     return render(request, "agency/dashboard.html", context)
 
@@ -196,14 +230,14 @@ def contract_pdf(request, pk):
 
 @login_required
 def template_library(request):
-    if not request.user.is_staff:
+    if not capabilities(request.user)["can_manage"]:
         raise PermissionDenied
     return render(request, "agency/template_library.html", {"templates": ContractTemplate.objects.all()})
 
 
 @login_required
 def template_editor(request, pk=None):
-    if not request.user.is_staff:
+    if not capabilities(request.user)["can_manage"]:
         raise PermissionDenied
     instance = get_object_or_404(ContractTemplate, pk=pk) if pk else None
     form = ContractTemplateForm(request.POST or None, instance=instance)
@@ -216,9 +250,16 @@ def template_editor(request, pk=None):
 
 @login_required
 def delivery_list(request):
-    start, end = month_bounds()
+    start, end = month_bounds(requested_month(request))
+    queryset = ContentDelivery.objects.filter(scheduled_for__gte=start, scheduled_for__lt=end).select_related("contract__client", "assignee")
+    query = request.GET.get("q", "").strip()
+    assignee = request.GET.get("assignee", "")
+    if query:
+        queryset = queryset.filter(Q(title__icontains=query) | Q(contract__client__trade_name__icontains=query))
+    if assignee.isdigit():
+        queryset = queryset.filter(assignee_id=int(assignee))
     deliveries = list(
-        ContentDelivery.objects.filter(scheduled_for__gte=start, scheduled_for__lt=end).select_related("contract__client")
+        queryset
     )
     columns = [
         {
@@ -228,7 +269,7 @@ def delivery_list(request):
         }
         for status, label in ContentDelivery.Status.choices
     ]
-    return render(request, "agency/delivery_list.html", {"deliveries": deliveries, "columns": columns, "month": start})
+    return render(request, "agency/delivery_list.html", {"deliveries": deliveries, "columns": columns, "month": start, "month_value": start.strftime("%Y-%m"), "query": query, "selected_assignee": assignee, "members": TeamMember.objects.all(), "status_choices": ContentDelivery.Status.choices})
 
 
 @login_required
@@ -287,6 +328,61 @@ def financial_entry_form(request, pk=None):
             "submit_label": "Salvar lançamento",
         },
     )
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def financial_settle(request, pk):
+    entry = get_object_or_404(FinancialEntry.objects.select_for_update(), pk=pk)
+    if entry.status == FinancialEntry.Status.PENDING:
+        entry.status = FinancialEntry.Status.PAID
+        entry.paid_date = timezone.localdate()
+        entry.save(update_fields=["status", "paid_date", "updated_at"])
+        messages.success(request, "Pagamento registrado com a data de hoje.")
+    else:
+        messages.info(request, "Este lançamento já foi pago ou cancelado; nenhum valor foi duplicado.")
+    return redirect(reverse("agency:finance") + "?tab=entries&month=" + entry.due_date.strftime("%Y-%m"))
+
+
+@login_required
+def financial_csv(request):
+    import csv
+    context = finance_context(request)
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="financeiro-{context["month_value"]}.csv"'
+    response.write("\ufeff")
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow(["Vencimento", "Descrição", "Categoria", "Cliente", "Tipo", "Valor", "Situação", "Pagamento", "Forma", "Favorecido"])
+    def safe(value):
+        value = str(value or "")
+        return "'" + value if value.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")) else value
+    for entry in context["entries"]:
+        writer.writerow([entry.due_date.isoformat(), safe(entry.description), safe(entry.category), safe(entry.client), entry.get_kind_display(), str(entry.amount).replace(".", ","), entry.get_status_display(), entry.paid_date.isoformat() if entry.paid_date else "", entry.get_payment_method_display(), safe(entry.counterparty)])
+    return response
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def financial_generate(request):
+    import calendar
+    value = request.POST.get("month", "")
+    try:
+        start = date.fromisoformat(value + "-01")
+    except ValueError:
+        messages.error(request, "Selecione uma competência válida.")
+        return redirect("agency:finance")
+    start, end = month_bounds(start)
+    contracts = Contract.objects.select_for_update().filter(status=Contract.Status.SIGNED, start_date__lt=end, end_date__gte=start, monthly_value__gt=0)
+    created = 0
+    for contract in contracts:
+        due = start.replace(day=min(contract.billing_day, calendar.monthrange(start.year, start.month)[1]))
+        due = max(due, contract.start_date)
+        _, is_new = FinancialEntry.objects.get_or_create(contract=contract, billing_month=start, defaults={"client": contract.client, "kind": FinancialEntry.Kind.INCOME, "description": f"{contract.title} · {start:%m/%Y}"[:180], "category": "Mensalidades de contratos", "amount": contract.monthly_value, "due_date": due, "status": FinancialEntry.Status.PENDING, "notes": "Mensalidade integral gerada pelo contrato. Confira condições de proporcionalidade antes de cobrar."})
+        created += is_new
+    messages.success(request, f"{created} mensalidade(s) pendente(s) gerada(s). Competências já geradas foram preservadas.")
+    return redirect(reverse("agency:finance") + "?tab=entries&month=" + value)
 
 
 def sign_contract(request, token):

@@ -14,3 +14,4 @@ backups/
 htmlcov/
 .sites-runtime/
 *.log
+tmp/

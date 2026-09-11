@@ -12,7 +12,7 @@ from .models import Client, ContentDelivery, Contract, ContractTemplate, Deliver
 
 class AgencyTestCase(TestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create_user("gestor", password="uma-senha-forte")
+        self.user = get_user_model().objects.create_user("gestor", password="uma-senha-forte", is_staff=True)
         self.client_record = Client.objects.create(trade_name="Cliente Teste", kind=Client.Kind.STORE)
         self.template = ContractTemplate.objects.create(
             name="Modelo de teste",
@@ -189,6 +189,8 @@ class AgencyTestCase(TestCase):
         self.assertEqual(self.client.get(url).status_code, 410)
 
     def test_template_library_requires_staff(self):
+        self.user.is_staff = False
+        self.user.save(update_fields=("is_staff",))
         url = reverse("agency:template_library")
         self.assertEqual(self.client.get(url).status_code, 302)
         self.client.force_login(self.user)

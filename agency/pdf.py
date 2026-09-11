@@ -34,6 +34,9 @@ def _page_brand(canvas, document):
     canvas.setFillColor(colors.HexColor("#080808"))
     canvas.rect(0, height - 28 * mm, width, 28 * mm, fill=1, stroke=0)
     logo_path = Path(settings.BASE_DIR) / "static" / "images" / "logo-portal-verdade-ceara.png"
+    organization = document.organization
+    if organization.logo and Path(organization.logo.path).exists():
+        logo_path = Path(organization.logo.path)
     if logo_path.exists():
         canvas.drawImage(
             str(logo_path),
@@ -45,17 +48,26 @@ def _page_brand(canvas, document):
             anchor="w",
             mask="auto",
         )
-    canvas.setStrokeColor(BRAND_RED)
+    canvas.setStrokeColor(colors.HexColor(organization.accent_color))
     canvas.setLineWidth(2)
     canvas.line(0, height - 28 * mm, width, height - 28 * mm)
     canvas.setFillColor(MUTED)
     canvas.setFont("Helvetica", 8)
     label = getattr(document, "footer_label", "Documento eletrônico")
-    canvas.drawCentredString(width / 2, 10 * mm, f"Portal Verdade Ceará | {label} | Página {document.page}")
+    footer = f"{organization.pdf_footer or organization.name} | {label} | Página {document.page}"
+    while canvas.stringWidth(footer, "Helvetica", 8) > width - 24 * mm and len(footer) > 45:
+        footer = footer[:len(footer) // 2 - 2] + "…" + footer[len(footer) // 2 + 3:]
+    canvas.drawCentredString(width / 2, 10 * mm, footer)
+    company_line = " · ".join(v for v in (organization.tax_id, organization.email, organization.phone) if v)
+    canvas.setFont("Helvetica", 7)
+    if company_line:
+        canvas.drawCentredString(width / 2, 6 * mm, company_line[:135])
     canvas.restoreState()
 
 
 def _portal_document(output, *, title, author="Portal Verdade Ceará", right_margin=18 * mm, left_margin=18 * mm):
+    from .models import OrganizationSettings
+    organization = OrganizationSettings.current()
     document = BaseDocTemplate(
         output,
         pagesize=A4,
@@ -64,8 +76,9 @@ def _portal_document(output, *, title, author="Portal Verdade Ceará", right_mar
         topMargin=36 * mm,
         bottomMargin=18 * mm,
         title=title,
-        author=author,
+        author=organization.name,
     )
+    document.organization = organization
     frame = Frame(
         document.leftMargin,
         document.bottomMargin,
@@ -212,7 +225,7 @@ def build_contract_pdf(contract):
             Paragraph("ASSINATURAS", heading),
             Spacer(1, 8 * mm),
             Table(
-                [["__________________________________", "__________________________________"], ["Portal Verdade Ceará", _safe(contract.client.legal_name or contract.client.trade_name)]],
+                [["__________________________________", "__________________________________"], [Paragraph(_safe(document.organization.legal_name or document.organization.name), small), Paragraph(_safe(contract.client.legal_name or contract.client.trade_name), small)]],
                 colWidths=[86 * mm, 86 * mm],
                 style=TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"), ("FONTSIZE", (0, 0), (-1, -1), 9)]),
             ),

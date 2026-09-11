@@ -10,7 +10,7 @@
   <article class="metric-card"><span>Clientes ativos</span><strong>{{ active_clients }}</strong><a href="{% url 'agency:client_list' %}">Ver clientes</a></article>
   <article class="metric-card"><span>Contratos vigentes</span><strong>{{ active_contracts }}</strong><small>{{ pending_signatures }} aguardando assinatura</small></article>
   <article class="metric-card"><span>Materiais do mês</span><strong>{{ month_deliveries }}</strong><small>{{ published_deliveries }} publicados</small></article>
-  <article class="metric-card accent"><span>Saldo realizado</span><strong>R$ {{ balance|floatformat:"2g" }}</strong><small>Entradas menos saídas pagas</small></article>
+  {% if can_finance %}<article class="metric-card accent"><span>Saldo realizado</span><strong>R$ {{ balance|floatformat:"2g" }}</strong><small>Entradas menos saídas pagas</small></article>{% else %}<article class="metric-card"><span>Tarefas em aberto</span><strong>{{ open_tasks }}</strong><small>{{ late_tasks }} atrasadas</small></article>{% endif %}
 </section>
 <section class="dashboard-grid">
   <article class="panel">
@@ -21,13 +21,14 @@
       {% empty %}<div class="empty">Nenhum material planejado para este mês.</div>{% endfor %}
     </div>
   </article>
-  <aside class="panel finance-snapshot">
+  {% if can_finance %}<aside class="panel finance-snapshot">
     <div class="panel-head"><div><span class="eyebrow">Financeiro</span><h2>Fluxo do mês</h2></div><a href="{% url 'agency:finance' %}">Detalhes</a></div>
     <div class="money-row income"><span>Entradas pagas</span><strong>R$ {{ income|floatformat:"2g" }}</strong></div>
     <div class="money-row expense"><span>Saídas pagas</span><strong>R$ {{ expense|floatformat:"2g" }}</strong></div>
     <div class="divider"></div>
     <h3>Pendências vencidas</h3>
     {% for entry in late_entries %}<div class="late-row"><div><strong>{{ entry.description }}</strong><small>{{ entry.client|default:"Sem cliente" }} • {{ entry.due_date|date:"d/m/Y" }}</small></div><b>R$ {{ entry.amount|floatformat:"2g" }}</b></div>{% empty %}<p class="muted">Nenhuma pendência vencida.</p>{% endfor %}
-  </aside>
+  </aside>{% endif %}
 </section>
+<section class="panel dashboard-tasks"><div class="panel-head"><div><span class="eyebrow">Organização</span><h2>Próximas tarefas da equipe</h2></div><a href="{% url 'agency:task_list' %}">{{ open_tasks }} em aberto · Ver quadro →</a></div>{% for task in upcoming_tasks %}<a class="list-row simple" href="{% url 'agency:task_detail' task.pk %}"><div><strong>{{ task.title }}</strong><small>{{ task.assignee|default:'Sem responsável' }} · {{ task.due_date|date:'d/m/Y'|default:'Sem prazo' }}</small></div><span class="badge priority-{{ task.priority }}">{% if task.is_overdue %}Atrasada{% else %}{{ task.get_status_display }}{% endif %}</span></a>{% empty %}<div class="empty">Nenhuma tarefa pendente. <a href="{% url 'agency:task_create' %}">Criar uma tarefa →</a></div>{% endfor %}</section>
 {% endblock %}

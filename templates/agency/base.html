@@ -1,30 +1,41 @@
 {% load static %}
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="{{ organization.default_theme }}" data-density="{{ organization.density }}" style="--brand: {{ organization.accent_color }};">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>{% block title %}Gestão{% endblock %} | Portal Verdade Ceará</title>
+  <title>{% block title %}Gestão{% endblock %} | {{ organization.name }}</title>
   <link rel="icon" type="image/png" href="{% static 'images/favicon-portal.png' %}">
   <link rel="apple-touch-icon" href="{% static 'images/favicon-portal.png' %}">
   <link rel="stylesheet" href="{% static 'css/system.css' %}?v=3">
+  <link rel="stylesheet" href="{% static 'css/workspace.css' %}">
+  <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/system.js' %}" defer></script>
 </head>
 <body class="app-page">
+  <a class="skip-link" href="#main-content">Ir ao conteúdo</a>
   <aside class="sidebar" id="sidebar">
     <a class="sidebar-brand" href="{% url 'agency:dashboard' %}">
-      <img class="brand-icon" src="{% static 'images/favicon-portal.png' %}" alt="Portal Verdade Ceará">
-      <img class="brand-full" src="{% static 'images/logo-portal-verdade-ceara.png' %}" alt="Portal Verdade Ceará">
+      <img class="brand-icon" src="{% static 'images/favicon-portal.png' %}" alt="{{ organization.name }}">
+      <img class="brand-full" src="{% url 'brand_logo' %}" alt="{{ organization.name }}">
     </a>
     <nav class="sidebar-nav" aria-label="Navegação principal">
       <a href="{% url 'agency:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5h-5.7v-7H9.2v7H3.5a.5.5 0 0 1-.5-.5z"/></svg></span><b>Visão geral</b></a>
       <a href="{% url 'agency:client_list' %}" class="{% if 'client' in request.resolver_match.url_name %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><b>Clientes</b></a>
+      {% if can_manage %}
       <a href="{% url 'agency:contract_list' %}" class="{% if 'contract' in request.resolver_match.url_name or 'template' in request.resolver_match.url_name %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm0 0v6h6M8 13h8M8 17h6"/></svg></span><b>Contratos</b></a>
+      {% endif %}
       <a href="{% url 'agency:delivery_list' %}" class="{% if 'delivery' in request.resolver_match.url_name %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 3v18M3 9h18M3 15h18"/></svg></span><b>Materiais</b></a>
+      {% if can_finance %}
       <a href="{% url 'agency:finance' %}" class="{% if 'financial' in request.resolver_match.url_name or request.resolver_match.url_name == 'finance' %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 13h4M2 9h20"/></svg></span><b>Financeiro</b></a>
+      {% endif %}
+      <a href="{% url 'agency:task_list' %}" class="{% if 'task' in request.resolver_match.url_name %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 8 2 2 4-4M7 15h10M15 9h2"/></svg></span><b>Organização / tarefas</b></a>
+      {% if can_manage %}<a href="{% url 'agency:team_list' %}" class="{% if 'team' in request.resolver_match.url_name %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3"/><path d="M6 21v-3a6 6 0 0 1 12 0v3M3 10v5M21 10v5"/></svg></span><b>Equipe & permissões</b></a>{% endif %}
     </nav>
     <div class="sidebar-bottom">
+      <a href="{% url 'agency:help' %}" title="Guia de uso"><span>?</span><b>Guia de uso</b></a>
+      {% if can_manage %}<a href="{% url 'agency:settings_edit' %}" title="Personalização"><span>⚙</span><b>Personalização</b></a>{% endif %}
       {% if request.user.is_staff %}<a href="{% url 'admin:index' %}" title="Configurações avançadas"><span>⚙</span><b>Configurações avançadas</b></a>{% endif %}
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" title="Sair"><span>→</span><b>Sair</b></button></form>
     </div>
@@ -33,12 +44,14 @@
     <header class="topbar">
       <button class="menu-button" type="button" data-menu aria-label="Abrir menu">☰</button>
       <div>
-        <span class="topbar-kicker">Portal Verdade Ceará</span>
+        <span class="topbar-kicker">{{ organization.name }}</span>
         <strong>{% block section_name %}Gestão{% endblock %}</strong>
       </div>
-      <div class="user-chip"><span>{{ request.user.get_short_name|default:request.user.username|slice:":1"|upper }}</span><div>{{ request.user.get_full_name|default:request.user.username }}<small>Administrador</small></div></div>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Alternar tema claro e escuro" title="Alternar tema">☼</button>
+      <div class="user-chip"><span>{{ request.user.get_short_name|default:request.user.username|slice:":1"|upper }}</span><div>{{ request.user.get_full_name|default:request.user.username }}<small>{% if can_manage %}Gestão{% elif can_finance %}Financeiro{% else %}Produção{% endif %}</small></div></div>
     </header>
-    <main class="content">
+    <main class="content" id="main-content">
+      <div id="workspace-feedback" role="status" aria-live="polite"></div>
       {% if messages %}<div class="toast-stack">{% for message in messages %}<div class="toast toast-{{ message.tags }}"><span>✓</span>{{ message }}</div>{% endfor %}</div>{% endif %}
       {% block content %}{% endblock %}
     </main>

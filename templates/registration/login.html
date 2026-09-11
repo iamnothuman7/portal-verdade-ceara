@@ -1,19 +1,19 @@
 {% load static %}
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="{{ organization.default_theme }}" data-density="{{ organization.density }}" style="--brand: {{ organization.accent_color }};">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Entrar | Portal Verdade Ceará</title>
+  <title>Entrar | {{ organization.name }}</title>
   <link rel="icon" type="image/png" href="{% static 'images/favicon-portal.png' %}">
   <link rel="apple-touch-icon" href="{% static 'images/favicon-portal.png' %}">
   <link rel="stylesheet" href="{% static 'css/system.css' %}?v=3">
 </head>
 <body class="login-page">
   <main class="login-shell">
-    <section class="login-brand" aria-label="Portal Verdade Ceará">
-      <img src="{% static 'images/logo-portal-verdade-ceara.png' %}" alt="Portal Verdade Ceará">
+    <section class="login-brand" aria-label="{{ organization.name }}">
+      <img src="{% url 'brand_logo' %}" alt="{{ organization.name }}">
       <div>
         <span class="eyebrow">Central de operações</span>
         <h1>Sua agência,<br>sob controle.</h1>
@@ -21,7 +21,7 @@
       </div>
     </section>
     <section class="login-card">
-      <img class="login-card-logo" src="{% static 'images/logo-portal-verdade-ceara.png' %}" alt="Portal Verdade Ceará">
+      <img class="login-card-logo" src="{% url 'brand_logo' %}" alt="{{ organization.name }}">
       <div class="login-card-head">
         <span class="status-dot" aria-hidden="true"></span>
         <span>Acesso restrito</span>
@@ -38,7 +38,7 @@
         {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
         <button class="button button-primary button-block" type="submit">Entrar no sistema</button>
       </form>
-      <small>Ambiente seguro • Portal Verdade Ceará</small>
+      <small>Ambiente seguro • {{ organization.name }}</small>
     </section>
   </main>
 </body>
