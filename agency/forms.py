@@ -1,7 +1,9 @@
 from decimal import Decimal
+from calendar import monthrange
 
 from django import forms
 from django.db import transaction
+from django.utils import timezone
 
 from .models import Client, ContentDelivery, Contract, ContractTemplate, DeliverableQuota, FinancialEntry, TeamMember, Task, OrganizationSettings
 
@@ -20,6 +22,21 @@ QUOTA_FIELDS = (
 def format_currency_br(value):
     formatted = f"{Decimal(value or 0):,.2f}"
     return "R$ " + formatted.replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def add_calendar_months(start, months):
+    year, month = divmod(start.year * 12 + start.month - 1 + months, 12)
+    return start.replace(year=year, month=month + 1, day=min(start.day, monthrange(year, month + 1)[1]))
+
+
+def contract_duration(start, end):
+    months = (end.year - start.year) * 12 + end.month - start.month
+    if months > 0 and add_calendar_months(start, months) == end:
+        if months == 6:
+            return "6 (seis) meses"
+        return f"{months} " + ("mês" if months == 1 else "meses")
+    days = (end - start).days
+    return f"{days} " + ("dia" if days == 1 else "dias")
 
 
 class ContractBuilderForm(forms.ModelForm):
@@ -46,6 +63,10 @@ class ContractBuilderForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["client"].queryset = Client.objects.order_by("trade_name")
         self.fields["template"].queryset = ContractTemplate.objects.filter(is_active=True)
+        self.fields["end_date"].help_text = "Prazo padrão sugerido: 6 meses. O texto do contrato acompanha as datas escolhidas."
+        if not self.is_bound and not self.instance.pk:
+            start = self.initial.setdefault("start_date", timezone.localdate())
+            self.initial.setdefault("end_date", add_calendar_months(start, 6))
         self.fields["status"].choices = (
             (Contract.Status.DRAFT, Contract.Status.DRAFT.label),
             (Contract.Status.SENT, Contract.Status.SENT.label),
@@ -79,6 +100,7 @@ class ContractBuilderForm(forms.ModelForm):
             "contrato_nome": contract.title,
             "data_inicio": contract.start_date.strftime("%d/%m/%Y"),
             "data_fim": contract.end_date.strftime("%d/%m/%Y"),
+            "prazo_contrato": contract_duration(contract.start_date, contract.end_date),
             "valor_mensal": format_currency_br(contract.monthly_value),
             "dia_vencimento": contract.billing_day,
             "pacote_mensal": package,
@@ -171,6 +193,7 @@ class ContractTemplateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["content"].help_text += " Prazo calculado pelas datas: [[prazo_contrato]]. O prazo padrão sugerido é de 6 meses."
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "studio-input")
 

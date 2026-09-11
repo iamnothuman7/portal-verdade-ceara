@@ -19,8 +19,8 @@
   <a class="skip-link" href="#main-content">Ir ao conteúdo</a>
   <aside class="sidebar" id="sidebar">
     <a class="sidebar-brand logo-{{ organization.panel_logo }}" href="{% url 'agency:dashboard' %}">
-      <img class="brand-icon" src="{% url 'brand_compact_logo' %}" alt="{{ organization.name }}">
-      <img class="brand-full" src="{% url 'brand_panel_logo' %}" alt="{{ organization.name }}">
+      <img class="brand-icon" src="{% url 'brand_compact_logo' %}" alt="{{ organization.name }}" width="38" height="38" loading="eager" decoding="async">
+      <img class="brand-full" src="{% url 'brand_panel_logo' %}" alt="{{ organization.name }}" width="196" height="52" loading="eager" decoding="async">
     </a>
     <nav class="sidebar-nav" aria-label="Navegação principal">
       <a href="{% url 'agency:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5h-5.7v-7H9.2v7H3.5a.5.5 0 0 1-.5-.5z"/></svg></span><b>Visão geral</b></a>

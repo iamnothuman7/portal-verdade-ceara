@@ -17,6 +17,30 @@ from .work_forms import OrganizationSettingsForm, TeamMemberForm
 
 
 class AccessBrandingTests(TestCase):
+    def test_brand_logos_revalidate_without_resending_identical_images(self):
+        for name in ("brand_logo", "brand_compact_logo", "brand_panel_logo"):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 200)
+            etag = response["ETag"]
+            response.close()
+            cached = self.client.get(reverse(name), HTTP_IF_NONE_MATCH=etag)
+            self.assertEqual(cached.status_code, 304)
+            self.assertEqual(cached["ETag"], etag)
+            self.assertEqual(cached["Cache-Control"], "no-cache")
+
+    def test_panel_logo_cache_changes_when_brand_variant_changes(self):
+        organization = OrganizationSettings.current()
+        organization.save()
+        original = self.client.get(reverse("brand_panel_logo"))
+        etag = original["ETag"]
+        original.close()
+        organization.panel_logo = "compact"
+        organization.save(update_fields=["panel_logo"])
+        changed = self.client.get(reverse("brand_panel_logo"), HTTP_IF_NONE_MATCH=etag)
+        self.assertEqual(changed.status_code, 200)
+        self.assertNotEqual(changed["ETag"], etag)
+        changed.close()
+
     @classmethod
     def setUpTestData(cls):
         cls.admin = get_user_model().objects.create_superuser("access-test-admin", password="Test-Only!9sQ7xy")

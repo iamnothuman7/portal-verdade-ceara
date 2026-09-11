@@ -29,7 +29,11 @@ html { scrollbar-color: #91434d #111114; scrollbar-width: thin; }
 html[data-theme=light] .app-page * { scrollbar-color: #b26770 #e9e9ef; }
 html[data-theme=light] .money-row.income strong { color: #15803d; }
 html[data-theme=light] .money-row.expense strong { color: #be123c; }
-.sidebar { overscroll-behavior: contain; }
+.sidebar { overscroll-behavior: contain; overflow: hidden; }
+.sidebar-brand { flex: 0 0 64px; width: 100%; }
+.sidebar-nav { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; align-content: start; padding-bottom: 8px; }
+.sidebar-bottom { flex: 0 0 auto; }
+.sidebar-brand .brand-full { flex: 0 0 auto; max-width: 100%; }
 .dashboard-content #workspace-feedback:empty { display: none; }
 .dashboard-scroll:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 6px; }
 @media (min-width: 901px) and (min-height: 650px) {

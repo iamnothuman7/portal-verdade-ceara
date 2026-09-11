@@ -32,24 +32,37 @@ def help_page(request):
 
 
 def brand_logo(request, variant="full"):
+    import os
     from django.http import FileResponse
     from django.conf import settings
     from pathlib import Path
+    from django.utils.cache import get_conditional_response
+
+    def image_response(file, content_type=None):
+        response = FileResponse(file, content_type=content_type)
+        response["Cache-Control"] = "no-cache"
+        try:
+            metadata = os.fstat(file.fileno())
+        except (AttributeError, OSError):
+            return response
+        # Revalidate on navigation, but reuse identical image bytes from cache.
+        response["ETag"] = f'"{metadata.st_mtime_ns:x}-{metadata.st_size:x}"'
+        result = get_conditional_response(request, etag=response["ETag"], response=response)
+        if result is not response:
+            response.close()
+        return result
+
     organization = OrganizationSettings.current()
     if variant == "panel":
         variant = organization.panel_logo
     logo = organization.compact_logo if variant == "compact" else organization.logo
     if logo:
         try:
-            response = FileResponse(logo.open("rb"))
-            response["Cache-Control"] = "no-cache"
-            return response
+            return image_response(logo.open("rb"))
         except FileNotFoundError:
             pass
     filename = "favicon-portal.png" if variant == "compact" else "logo-portal-verdade-ceara.png"
-    response = FileResponse((Path(settings.BASE_DIR) / "static/images" / filename).open("rb"), content_type="image/png")
-    response["Cache-Control"] = "no-cache"
-    return response
+    return image_response((Path(settings.BASE_DIR) / "static/images" / filename).open("rb"), content_type="image/png")
 
 
 @login_required
