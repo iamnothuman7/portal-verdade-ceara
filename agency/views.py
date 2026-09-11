@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.db import transaction
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_safe
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -220,6 +220,17 @@ def contract_update(request, pk):
 def contract_detail(request, pk):
     contract = get_object_or_404(Contract.objects.select_related("client", "template").prefetch_related("quotas"), pk=pk)
     return render(request, "agency/contract_detail.html", {"contract": contract})
+
+
+@login_required
+@require_safe
+def contract_view(request, pk):
+    contract = get_object_or_404(Contract.objects.select_related("client").prefetch_related("quotas"), pk=pk)
+    response = render(request, "agency/contract_sign.html", {
+        "contract": contract, "internal_preview": True, "signed": bool(contract.signed_at),
+    })
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @login_required

@@ -28,6 +28,7 @@ urlpatterns = [
     path("contratos/modelos/novo/", views.template_editor, name="template_create"),
     path("contratos/modelos/<int:pk>/editar/", views.template_editor, name="template_edit"),
     path("contratos/<int:pk>/", views.contract_detail, name="contract_detail"),
+    path("contratos/<int:pk>/visualizar/", views.contract_view, name="contract_view"),
     path("contratos/<int:pk>/editar/", views.contract_update, name="contract_edit"),
     path("contratos/<int:pk>/pdf/", views.contract_pdf, name="contract_pdf"),
     path("materiais/", views.delivery_list, name="delivery_list"),

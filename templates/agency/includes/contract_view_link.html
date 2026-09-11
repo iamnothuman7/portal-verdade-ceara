@@ -1,0 +1,1 @@
+<a class="{{ view_link_class|default:'' }}" href="{% url 'agency:contract_view' contract.pk %}">{% if contract.signed_at %}Ver contrato assinado{% elif contract.status == 'sent' %}Ver contrato enviado{% else %}Ver contrato{% endif %}</a>

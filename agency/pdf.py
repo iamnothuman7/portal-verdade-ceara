@@ -6,7 +6,7 @@ import re
 from django.conf import settings
 from django.utils import timezone
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -51,6 +51,16 @@ def _page_brand(canvas, document):
     canvas.setStrokeColor(colors.HexColor(organization.accent_color))
     canvas.setLineWidth(2)
     canvas.line(0, height - 28 * mm, width, height - 28 * mm)
+    if getattr(document, "contract_reference", None):
+        canvas.setFillColor(colors.white)
+        canvas.setFont("Helvetica-Bold", 9)
+        canvas.drawRightString(width - 18 * mm, height - 12 * mm, "PRESTAÇÃO DE SERVIÇOS")
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.HexColor("#D0D0D4"))
+        canvas.drawRightString(width - 18 * mm, height - 18 * mm, document.contract_reference)
+        canvas.setStrokeColor(colors.HexColor("#D8D8DC"))
+        canvas.setLineWidth(0.5)
+        canvas.line(18 * mm, 15 * mm, width - 18 * mm, 15 * mm)
     canvas.setFillColor(MUTED)
     canvas.setFont("Helvetica", 8)
     label = getattr(document, "footer_label", "Documento eletrônico")
@@ -97,16 +107,18 @@ def _portal_document(output, *, title, author="Portal Verdade Ceará", right_mar
 def build_contract_pdf(contract):
     output = BytesIO()
     document = _portal_document(output, title=f"{contract.title} - {contract.client.trade_name}")
+    document.contract_reference = f"CONTRATO Nº {contract.pk:06d}" if getattr(contract, "pk", None) else "MINUTA PARA CONFERÊNCIA"
+    document.footer_label = document.contract_reference
     styles = getSampleStyleSheet()
     title = ParagraphStyle(
         "PortalTitle",
         parent=styles["Title"],
         fontName="Helvetica-Bold",
-        fontSize=22,
-        leading=25,
+        fontSize=19,
+        leading=23,
         textColor=INK,
         alignment=TA_CENTER,
-        spaceAfter=14,
+        spaceAfter=12,
     )
     eyebrow = ParagraphStyle(
         "PortalEyebrow",
@@ -122,23 +134,27 @@ def build_contract_pdf(contract):
         "PortalHeading",
         parent=styles["Heading2"],
         fontName="Helvetica-Bold",
-        fontSize=12,
-        leading=15,
+        fontSize=10.5,
+        leading=14,
         textColor=INK,
-        spaceBefore=12,
-        spaceAfter=8,
+        spaceBefore=9,
+        spaceAfter=6,
     )
     body = ParagraphStyle(
         "PortalBody",
         parent=styles["BodyText"],
         fontName="Helvetica",
-        fontSize=10,
-        leading=15,
+        fontSize=9.5,
+        leading=12.5,
         textColor=INK,
         alignment=TA_JUSTIFY,
-        spaceAfter=7,
+        spaceAfter=5,
+        allowWidows=0,
+        allowOrphans=0,
     )
     small = ParagraphStyle("PortalSmall", parent=body, fontSize=8, leading=11, textColor=MUTED)
+    cell = ParagraphStyle("PortalCell", parent=body, alignment=TA_LEFT, fontSize=9, leading=12, spaceAfter=0)
+    cell_header = ParagraphStyle("PortalCellHeader", parent=cell, fontName="Helvetica-Bold", fontSize=8, textColor=colors.white)
 
     story = [
         Paragraph("CONTRATO DE PRESTAÇÃO DE SERVIÇOS", eyebrow),
@@ -153,7 +169,7 @@ def build_contract_pdf(contract):
             Paragraph(f"<b>{_safe(_currency(contract.monthly_value))}</b><br/>vencimento dia {contract.billing_day}", body),
         ],
     ]
-    meta_table = Table(metadata, colWidths=[76 * mm, 48 * mm, 48 * mm])
+    meta_table = Table(metadata, colWidths=[document.width * .44, document.width * .28, document.width * .28])
     meta_table.setStyle(
         TableStyle(
             [
@@ -168,14 +184,14 @@ def build_contract_pdf(contract):
             ]
         )
     )
-    story.extend([meta_table, Spacer(1, 6 * mm), Paragraph("PACOTE MENSAL CONTRATADO", heading)])
+    story.extend([meta_table, Spacer(1, 3 * mm), Paragraph("PACOTE MENSAL CONTRATADO", heading)])
 
-    quota_rows = [["Material", "Quantidade mensal", "Detalhes"]]
+    quota_rows = [[Paragraph(label, cell_header) for label in ("MATERIAL", "QUANTIDADE MENSAL", "DETALHES")]]
     for quota in contract.quotas.all():
-        quota_rows.append([quota.get_kind_display(), str(quota.quantity), quota.notes or "-"])
+        quota_rows.append([Paragraph(_safe(value), cell) for value in (quota.get_kind_display(), str(quota.quantity), quota.notes or "-")])
     if len(quota_rows) == 1:
-        quota_rows.append(["Pacote personalizado", "Conforme demanda", "Descrito nos termos"])
-    quota_table = Table(quota_rows, colWidths=[65 * mm, 48 * mm, 59 * mm], repeatRows=1)
+        quota_rows.append([Paragraph(label, cell) for label in ("Pacote personalizado", "Conforme demanda", "Descrito nos termos")])
+    quota_table = Table(quota_rows, colWidths=[document.width * .3, document.width * .25, document.width * .45], repeatRows=1, splitInRow=1)
     quota_table.setStyle(
         TableStyle(
             [
@@ -194,18 +210,19 @@ def build_contract_pdf(contract):
             ]
         )
     )
-    story.extend([quota_table, Spacer(1, 5 * mm), Paragraph("TERMOS E CONDIÇÕES", heading)])
+    story.extend([quota_table, Spacer(1, 3 * mm), Paragraph("TERMOS E CONDIÇÕES", heading)])
     term_lines = [line.strip() for line in contract.terms.splitlines() if line.strip()]
     index = 0
     while index < len(term_lines):
         line = term_lines[index]
         is_heading = bool(re.match(r"^\d+\.\s", line)) or (line.isupper() and len(line) < 100)
         if is_heading and index + 1 < len(term_lines):
-            clause_heading = ParagraphStyle("PortalClause", parent=body, fontName="Helvetica-Bold", spaceBefore=7, spaceAfter=5)
+            clause_heading = ParagraphStyle("PortalClause", parent=body, fontName="Helvetica-Bold", spaceBefore=6, spaceAfter=4)
             story.append(KeepTogether([Paragraph(_safe(line), clause_heading), Paragraph(_safe(term_lines[index + 1]), body)]))
             index += 2
         else:
-            story.append(Paragraph(_safe(line), body))
+            paragraph = Paragraph(_safe(line), body)
+            story.append(paragraph)
             index += 1
 
     if contract.signed_at:
@@ -221,16 +238,18 @@ def build_contract_pdf(contract):
         ]
     else:
         proof = [
-            Spacer(1, 8 * mm),
+            Spacer(1, 5 * mm),
             Paragraph("ASSINATURAS", heading),
-            Spacer(1, 8 * mm),
+            Spacer(1, 6 * mm),
             Table(
                 [["__________________________________", "__________________________________"], [Paragraph(_safe(document.organization.legal_name or document.organization.name), small), Paragraph(_safe(contract.client.legal_name or contract.client.trade_name), small)]],
-                colWidths=[86 * mm, 86 * mm],
+                colWidths=[document.width / 2, document.width / 2],
                 style=TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"), ("FONTSIZE", (0, 0), (-1, -1), 9)]),
             ),
         ]
-    story.append(KeepTogether(proof))
+    # Keep the last term beside the signatures instead of an isolated signature page.
+    closing = [story.pop()] if term_lines and isinstance(story[-1], Paragraph) else []
+    story.append(KeepTogether(closing + proof))
     document.build(story)
     return output.getvalue()
 
