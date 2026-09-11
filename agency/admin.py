@@ -1,6 +1,21 @@
 from django.contrib import admin
 
-from .models import Client, ContentDelivery, Contract, ContractTemplate, DeliverableQuota, FinancialEntry
+from .models import Client, ContentDelivery, Contract, ContractTemplate, DeliverableQuota, FinancialEntry, TeamMember
+
+
+@admin.register(TeamMember)
+class TeamMemberAuditAdmin(admin.ModelAdmin):
+    list_display = ("name", "role", "is_active", "user")
+    readonly_fields = ("name", "role", "job_title", "email", "phone", "is_active", "user", "permissions", "created_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
 
 
 class DeliverableQuotaInline(admin.TabularInline):

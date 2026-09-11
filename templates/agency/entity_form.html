@@ -3,6 +3,7 @@
 {% block content %}
 <a class="back-link" href="{{ back_url }}">← Voltar</a>
 <div class="page-heading compact"><div><span class="eyebrow">{{ eyebrow }}</span><h1>{{ title }}</h1><p>{{ description }}</p></div></div>
+{% if form.panel_logo %}<section class="brand-options" aria-label="Versões da marca"><article class="panel"><div class="brand-preview"><img src="{% url 'brand_logo' %}" alt="Prévia da logo inteira"></div><h2>Logo inteira</h2><p>Identidade completa. Mantida no login e nos documentos.</p></article><article class="panel"><div class="brand-preview compact"><img src="{% url 'brand_compact_logo' %}" alt="Prévia da logo compacta"></div><h2>Logo compacta</h2><p>Símbolo da marca para uma apresentação mais discreta no painel.</p></article></section>{% endif %}
 <form method="post" class="entity-form" enctype="multipart/form-data">{% csrf_token %}
   {% if form.non_field_errors %}<div class="alert form-alert">{{ form.non_field_errors }}</div>{% endif %}
   <section class="studio-panel">

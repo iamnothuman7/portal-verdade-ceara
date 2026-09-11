@@ -2,7 +2,7 @@
 
 ## Primeiro acesso e personalização
 
-Em **Personalização**, cadastre nome, razão social, CPF/CNPJ, endereço, cidade, telefone e e-mail. Defina cor, tema padrão e densidade da interface. A logo pode ser PNG, JPEG ou WebP de até 5 MB. O favicon original permanece independente da logo institucional.
+Em **Personalização**, cadastre nome, razão social, CPF/CNPJ, endereço, cidade, telefone e e-mail. Defina cor, tema padrão e densidade da interface. Envie a **logo inteira** e a **logo compacta (símbolo)** e escolha a versão em **Logo exibida no painel**. As prévias mostram as imagens salvas. Cada imagem pode ser PNG, JPEG ou WebP de até 5 MB. Sem envio, usamos as marcas originais. O menu recolhido usa sempre o símbolo; o menu expandido usa a versão escolhida. O login e os documentos continuam com a logo inteira. O favicon original permanece independente.
 
 A opção de tema no cabeçalho fica salva apenas naquele navegador e prevalece sobre o padrão da empresa. A densidade compacta é o padrão; a confortável aumenta campos e espaçamentos.
 
@@ -12,11 +12,15 @@ Em **Equipe & permissões**, cadastre nome, função e contatos. Um integrante p
 
 | Perfil | Permissões |
 |---|---|
-| Gestão | Operação, contratos, modelos, equipe, personalização e financeiro |
+| Gestão | Operação, contratos, modelos, personalização e financeiro |
 | Financeiro | Clientes, materiais, tarefas, lançamentos e relatórios |
 | Produção | Clientes, materiais e tarefas, sem valores de contratos ou financeiro |
 
-Somente gestão altera a equipe. Contas administrativas e o próprio acesso são protegidos de alterações por esse formulário. Desativar um integrante desativa também seu acesso vinculado e preserva o histórico. Contas sem perfil de equipe e sem privilégios administrativos têm acesso de produção.
+Somente o superusuário e contas administrativas preexistentes sem perfil de equipe alteram credenciais e permissões. Contas administrativas e o próprio acesso são protegidos de alterações por esse formulário. Perfis de equipe não concedem privilégios de superusuário ou acesso às configurações avançadas.
+
+No cadastro ou edição, escolha **Seguir perfil**, **Sem acesso**, **Somente visualizar** ou **Visualizar e editar** para clientes, contratos/modelos, materiais, tarefas e financeiro. Somente visualizar inclui downloads do módulo, mas bloqueia alterações, movimentações e baixas. Contratos incluem seus valores. As permissões são por módulo, não por cliente ou registro; nomes de clientes e responsáveis vinculados continuam visíveis na operação autorizada. Gestão mantém acesso à personalização.
+
+Desativar um integrante bloqueia o login e preserva o histórico. Deixe a senha vazia na edição para mantê-la; informar outra senha encerra as sessões anteriores. O histórico das alterações fica em Configurações avançadas > Equipe > integrante > Histórico, sem registrar senhas. Contas sem perfil e sem privilégios administrativos não acessam os módulos.
 
 ## Clientes, contratos e materiais
 

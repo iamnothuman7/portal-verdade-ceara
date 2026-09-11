@@ -230,14 +230,14 @@ def contract_pdf(request, pk):
 
 @login_required
 def template_library(request):
-    if not capabilities(request.user)["can_manage"]:
+    if not capabilities(request.user)["can_view_contracts"]:
         raise PermissionDenied
     return render(request, "agency/template_library.html", {"templates": ContractTemplate.objects.all()})
 
 
 @login_required
 def template_editor(request, pk=None):
-    if not capabilities(request.user)["can_manage"]:
+    if not capabilities(request.user)["can_edit_contracts"]:
         raise PermissionDenied
     instance = get_object_or_404(ContractTemplate, pk=pk) if pk else None
     form = ContractTemplateForm(request.POST or None, instance=instance)

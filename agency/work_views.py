@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.views.decorators.debug import sensitive_post_parameters
 
 from .models import ContentDelivery, TeamMember, Task, TaskChecklistItem, TaskComment, Client, OrganizationSettings
 from .work_forms import TeamMemberForm, TaskForm, OrganizationSettingsForm
@@ -30,17 +31,25 @@ def help_page(request):
     return render(request, "agency/help.html")
 
 
-def brand_logo(request):
+def brand_logo(request, variant="full"):
     from django.http import FileResponse
     from django.conf import settings
     from pathlib import Path
     organization = OrganizationSettings.current()
-    if organization.logo:
+    if variant == "panel":
+        variant = organization.panel_logo
+    logo = organization.compact_logo if variant == "compact" else organization.logo
+    if logo:
         try:
-            return FileResponse(organization.logo.open("rb"))
+            response = FileResponse(logo.open("rb"))
+            response["Cache-Control"] = "no-cache"
+            return response
         except FileNotFoundError:
             pass
-    return FileResponse((Path(settings.BASE_DIR) / "static/images/logo-portal-verdade-ceara.png").open("rb"), content_type="image/png")
+    filename = "favicon-portal.png" if variant == "compact" else "logo-portal-verdade-ceara.png"
+    response = FileResponse((Path(settings.BASE_DIR) / "static/images" / filename).open("rb"), content_type="image/png")
+    response["Cache-Control"] = "no-cache"
+    return response
 
 
 @login_required
@@ -54,16 +63,22 @@ def team_list(request):
 
 
 @login_required
+@sensitive_post_parameters("password")
 def team_form(request, pk=None):
     member = get_object_or_404(TeamMember.objects.select_related("user"), pk=pk) if pk else None
     if member and member.user_id and (member.user.is_staff or member.user.is_superuser or member.user_id == request.user.pk):
         raise PermissionDenied("O próprio acesso e contas administrativas são gerenciados nas configurações avançadas.")
     form = TeamMemberForm(request.POST or None, instance=member)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
+        with transaction.atomic():
+            saved = form.save()
+            LogEntry.objects.log_actions(user_id=request.user.pk, queryset=TeamMember.objects.filter(pk=saved.pk),
+                action_flag=CHANGE if member else ADDITION,
+                change_message="Cadastro e permissões atualizados." + (" Senha definida ou redefinida." if form.cleaned_data.get("password") else ""))
         messages.success(request, "Integrante salvo. O acesso segue o perfil e a situação definidos.")
         return redirect("agency:team_list")
-    return render(request, "agency/entity_form.html", {"form": form, "title": "Editar integrante" if member else "Novo integrante", "eyebrow": "Equipe & permissões", "description": "Gestão: acesso completo. Financeiro: caixa, clientes e operação. Produção: clientes, materiais e tarefas.", "back_url": reverse("agency:team_list"), "submit_label": "Salvar integrante"})
+    return render(request, "agency/team_form.html", {"form": form, "title": "Editar integrante" if member else "Novo integrante", "back_url": reverse("agency:team_list")})
 
 
 @login_required

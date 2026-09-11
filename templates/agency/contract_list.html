@@ -1,7 +1,7 @@
 {% extends 'agency/base.html' %}
 {% block title %}Contratos{% endblock %}{% block section_name %}Contratos{% endblock %}
 {% block content %}
-<div class="page-heading compact"><div><span class="eyebrow">Estúdio de documentos</span><h1>Contratos</h1><p>Gere documentos, organize os pacotes e acompanhe as assinaturas.</p></div><div class="heading-actions">{% if request.user.is_staff %}<a class="button" href="{% url 'agency:template_library' %}">Modelos</a>{% endif %}<a class="button button-primary" href="{% url 'agency:contract_builder' %}">+ Gerar contrato</a></div></div>
+<div class="page-heading compact"><div><span class="eyebrow">Estúdio de documentos</span><h1>Contratos</h1><p>Gere documentos, organize os pacotes e acompanhe as assinaturas.</p></div><div class="heading-actions">{% if can_view_contracts %}<a class="button" href="{% url 'agency:template_library' %}">Modelos</a>{% endif %}{% if can_edit_contracts %}<a class="button button-primary" href="{% url 'agency:contract_builder' %}">+ Gerar contrato</a>{% endif %}</div></div>
 <section class="studio-summary">
   <div><span>Modelos reutilizáveis</span><strong>Campos automáticos</strong><small>Cliente, vigência, valor e pacote</small></div>
   <div><span>Documento profissional</span><strong>PDF em A4</strong><small>Marca, paginação e comprovante</small></div>

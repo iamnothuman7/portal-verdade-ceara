@@ -12,6 +12,8 @@ admin.site.index_title = "Gestão editorial"
 
 urlpatterns = [
     path("marca/logo/", brand_logo, name="brand_logo"),
+    path("marca/simbolo/", brand_logo, {"variant": "compact"}, name="brand_compact_logo"),
+    path("marca/painel/", brand_logo, {"variant": "panel"}, name="brand_panel_logo"),
     path("", auth_views.LoginView.as_view(template_name="registration/login.html", redirect_authenticated_user=True), name="login"),
     path("sair/", auth_views.LogoutView.as_view(), name="logout"),
     path("health/", health, name="health"),

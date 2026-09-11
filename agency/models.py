@@ -21,7 +21,9 @@ class OrganizationSettings(models.Model):
     accent_color = models.CharField("cor de destaque", max_length=7, default="#c71927", validators=[RegexValidator(r"^#[0-9a-fA-F]{6}$", "Informe uma cor hexadecimal válida.")])
     default_theme = models.CharField("tema padrão", max_length=8, choices=[("dark", "Escuro"), ("light", "Claro")], default="dark")
     density = models.CharField("tamanho da interface", max_length=12, choices=[("compact", "Compacto"), ("comfortable", "Confortável")], default="compact")
-    logo = models.ImageField("logo institucional", upload_to="branding/", blank=True)
+    logo = models.ImageField("logo inteira", upload_to="branding/", blank=True)
+    compact_logo = models.ImageField("logo compacta (símbolo)", upload_to="branding/", blank=True)
+    panel_logo = models.CharField("logo exibida no painel", max_length=8, choices=[("full", "Inteira"), ("compact", "Compacta")], default="full")
     pdf_footer = models.CharField("rodapé dos documentos", max_length=100, blank=True)
 
     class Meta:
@@ -206,6 +208,7 @@ class TeamMember(models.Model):
     phone = models.CharField("telefone", max_length=24, blank=True)
     is_active = models.BooleanField("ativo", default=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="team_member")
+    permissions = models.JSONField("permissões por módulo", default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
