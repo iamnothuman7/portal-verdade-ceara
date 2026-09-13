@@ -17,6 +17,12 @@ DEBUG = env_bool("DJANGO_DEBUG", True)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-development-only-change-me")
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+# Additional address for the same existing Portal application, not a Studio tenant.
+PORTAL_STUDIO_ALIAS = "portalverdadeceara.studio.nabio.pro"
+if PORTAL_STUDIO_ALIAS not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(PORTAL_STUDIO_ALIAS)
+if f"https://{PORTAL_STUDIO_ALIAS}" not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{PORTAL_STUDIO_ALIAS}")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
